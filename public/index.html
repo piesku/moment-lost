@@ -7,10 +7,37 @@
     html, body {
       padding: 0;
       margin: 0;
-      overflow: hidden
+      overflow: hidden;
+      background: #000;
+      font-family: Lato, Roboto, "Open Sans", Helvetica, Arial, sans-serif;
+      font-weight: 200;
+      color: #fefefe;
+      font-size: 64pt;
     }
+
+    #ui {
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #ui > div {
+      flex: 1
+      max-width: 800px;
+      max-height: 600px;
+    }
+
   </style>
 </head>
 <body>
+  <div id="ui">
+    <div id="title">
+      A moment lost in time.
+    </div>
+  </div>
+
   <script src="game.js"></script>
 </body>
