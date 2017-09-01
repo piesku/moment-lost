@@ -1,0 +1,20 @@
+{
+  "name": "a-moment-lost-in-time",
+  "version": "0.0.1",
+  "private": true,
+  "author": "piesku.com <piesku.com@gmail.com>",
+  "description": "A moment lost in time. A submission for js13kgames.",
+  "license": "ISC",
+  "devDependencies": {
+    "cervus": "^0.0.14",
+    "rollup": "^0.49.2",
+    "rollup-plugin-closure-compiler-js": "^1.0.5",
+    "rollup-plugin-livereload": "^0.6.0",
+    "rollup-plugin-serve": "^0.4.2",
+    "rollup-plugin-node-resolve": "^3.0.0"
+  },
+  "scripts": {
+    "prod": "./node_modules/.bin/rollup -c rollup-prod.js && printf \"Size gzipped: %s\n\" $(gzip public/game.min.js --stdout | wc -c | awk '{print $1/1000\"K\"}')",
+    "dev": "./node_modules/.bin/rollup -c rollup-dev.js -w"
+  }
+}
