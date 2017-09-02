@@ -5,6 +5,7 @@ import { basic } from 'cervus/modules/materials';
 const game = new Game({
   width: window.innerWidth,
   height: window.innerHeight,
+  clear_color: "#eeeeee",
   far: 1000
 });
 
