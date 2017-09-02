@@ -16,6 +16,7 @@ document.querySelector("#ui").addEventListener(
 game.camera.position = [0, 1.5, 0];
 game.camera.keyboard_controlled = true;
 game.camera.mouse_controlled = true;
+game.camera.move_speed = 10;
 
 game.add(new Plane({
   material: basic,
