@@ -9,7 +9,7 @@ const game = new Game({
   far: 1000
 });
 
-game.canvas.addEventListener(
+document.querySelector("#ui").addEventListener(
   'click', () => game.canvas.requestPointerLock()
 );
 
