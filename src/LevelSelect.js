@@ -20,7 +20,7 @@ function LevelSelect(results) {
       ${results.map(LevelScore)}
       <div class="action"
         style="padding: .5rem"
-        onclick="dispatch('NEXT_LEVEL')">next</div>
+        onclick="dispatch('PLAY_LEVEL')">next</div>
       </div>
     </div>
   `;

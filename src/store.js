@@ -1,6 +1,7 @@
 import { create_store } from "./inny";
-import { create_game, generate_snapshot, start_level, end_level }
-  from "./game";
+import {
+  create_game, generate_snapshot, start_level, end_level, destroy_level
+} from "./game";
 
 const default_state = {
   current_scene: "SCENE_TITLE",
@@ -15,10 +16,7 @@ function merge(...objs) {
 function reducer(state = default_state, action, args) {
   switch (action) {
     case "PLAY_NOW":
-      return merge(state, {
-        current_scene: "SCENE_LEVELS"
-      });
-    case "NEXT_LEVEL": {
+    case "PLAY_LEVEL": {
       const current_game = create_game();
       generate_snapshot(current_game);
       return merge(state, {
@@ -42,6 +40,13 @@ function reducer(state = default_state, action, args) {
         results: [...results, score]
       });
     }
+    case "PLAY_AGAIN":
+      const { current_game } = state;
+      destroy_level(current_game);
+      return merge(state, {
+        current_scene: "SCENE_LEVELS",
+        current_game: null
+      });
     default:
       return state;
   }

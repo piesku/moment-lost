@@ -4,7 +4,7 @@ import { connect } from "./store";
 function ScoreScreen(score) {
   return html`
     <div class="ui action"
-      onclick="dispatch('PLAY_NOW')">
+      onclick="dispatch('PLAY_AGAIN')">
       <div>${Math.floor(score * 100)}%</div>
     </div>
   `;
