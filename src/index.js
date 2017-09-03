@@ -1,6 +1,6 @@
-import { Game } from 'cervus/modules/core'; 
-import { Plane, Box } from 'cervus/modules/shapes';
-import { basic } from 'cervus/modules/materials';
+import { Game } from 'cervus/core';
+import { Plane, Box } from 'cervus/shapes';
+import { basic } from 'cervus/materials';
 
 const game = new Game({
   width: window.innerWidth,
