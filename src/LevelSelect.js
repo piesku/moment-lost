@@ -10,9 +10,11 @@ function LevelScore(num) {
 function LevelSelect(results) {
   return html`
     <div class="ui">
+      <div class="grid">
       ${results.map(LevelScore)}
       <div class="box action"
         onclick="dispatch('NEXT_LEVEL')">next</div>
+      </div>
     </div>
   `;
 }
