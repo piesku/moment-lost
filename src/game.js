@@ -38,7 +38,7 @@ export function generate_snapshot(game) {
   game.camera.position = [100, 1.5, 10];
 }
 
-export function start_game(game) {
+export function start_level(game) {
   game.camera.position = [0, 1.5, 0];
   game.camera.keyboard_controlled = true;
   game.camera.mouse_controlled = true;
@@ -46,4 +46,11 @@ export function start_game(game) {
   for (const entity of game.entities) {
     entity.color = "#000000";
   }
+}
+
+export function end_level(game) {
+  game.stop();
+  // Compare the position and the orientation of the camera with the target.
+  // Target can be an empty entity in the game.
+  return 0.89;
 }

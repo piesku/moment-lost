@@ -1,6 +1,6 @@
 import html from "./inny";
 
-export default function TitleScreen(num) {
+export default function TitleScreen() {
   return html`
     <div class="ui" style="flex-flow:column nowrap; align-items:center;">
       <div>A moment lost in time.</div>
