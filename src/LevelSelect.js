@@ -5,7 +5,7 @@ function LevelScore(num) {
   return html`
      <div class="box"
        style="padding: .5rem">
-       ${Math.floor(num * 100)}%</div>
+       ${num}%</div>
   `;
 }
 
@@ -26,4 +26,6 @@ function LevelSelect(results) {
   `;
 }
 
-export default connect(state => state.results)(LevelSelect);
+export default connect(
+  state => state.results.map(num => Math.floor(num * 100))
+)(LevelSelect);

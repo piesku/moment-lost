@@ -5,11 +5,11 @@ function ScoreScreen(score) {
   return html`
     <div class="ui action"
       onclick="dispatch('PLAY_AGAIN')">
-      <div>${Math.floor(score * 100)}%</div>
+      <div>${score}%</div>
     </div>
   `;
 }
 
 export default connect(
-  state => state.results[state.results.length - 1]
+  state => Math.floor(state.results[state.results.length - 1] * 100)
 )(ScoreScreen);
