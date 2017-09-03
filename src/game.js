@@ -2,6 +2,20 @@ import { Game } from 'cervus/core';
 import { Plane, Box } from 'cervus/shapes';
 import { basic } from 'cervus/materials';
 
+function integer_between(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function random_element(arr) {
+  return arr[integer_between(0, arr.length - 1)];
+}
+
+function random_color() {
+  return random_element([
+    "#e85821", "#2da4dc", "#87daa6"
+  ]);
+}
+
 export function create_game() {
   const game = new Game({
     width: window.innerWidth,
@@ -10,13 +24,15 @@ export function create_game() {
     far: 1000
   });
 
+  const color = random_color();
+
   game.camera.keyboard_controlled = false;
   game.camera.mouse_controlled = false;
   game.camera.move_speed = 10;
 
   game.add(new Plane({
     material: basic,
-    color: "#ef562d",
+    color,
     scale: [1000, 1, 1000]
   }));
 
@@ -25,7 +41,7 @@ export function create_game() {
     const x = 75 + 100 * Math.sin(i * Math.PI / 6);
     game.add(new Box({
       material: basic,
-      color: "#ef562d",
+      color,
       position: [sign * x, 20, 20 * i],
       scale: [90, 40, 15]
     }));
@@ -35,7 +51,11 @@ export function create_game() {
 }
 
 export function generate_snapshot(game) {
-  game.camera.position = [100, 1.5, 10];
+  game.camera.position = [
+    integer_between(-100, 100),
+    1.5,
+    integer_between(-20, 20)
+  ];
 }
 
 export function start_level(game) {
