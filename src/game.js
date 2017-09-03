@@ -52,5 +52,5 @@ export function end_level(game) {
   game.stop();
   // Compare the position and the orientation of the camera with the target.
   // Target can be an empty entity in the game.
-  return 0.89;
+  return Math.random();
 }

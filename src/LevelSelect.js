@@ -3,7 +3,7 @@ import { connect } from "./store";
 
 function LevelScore(num) {
   return html`
-     <div class="box">${num}%</div>
+     <div class="box">${Math.floor(num * 100)}%</div>
   `;
 }
 
