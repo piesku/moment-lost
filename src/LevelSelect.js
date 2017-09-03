@@ -3,16 +3,23 @@ import { connect } from "./store";
 
 function LevelScore(num) {
   return html`
-     <div class="box">${Math.floor(num * 100)}%</div>
+     <div class="box"
+       style="padding: .5rem">
+       ${Math.floor(num * 100)}%</div>
   `;
 }
 
 function LevelSelect(results) {
   return html`
     <div class="ui">
-      <div class="grid">
+      <div style="
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 1280px;
+        max-height: 720px">
       ${results.map(LevelScore)}
-      <div class="box action"
+      <div class="action"
+        style="padding: .5rem"
         onclick="dispatch('NEXT_LEVEL')">next</div>
       </div>
     </div>
