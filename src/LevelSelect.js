@@ -12,7 +12,7 @@ function LevelSelect(results) {
     <div class="ui">
       ${results.map(LevelScore)}
       <div class="box action"
-        onclick="dispatch('LEVEL_NEXT')">next</div>
+        onclick="dispatch('NEXT_LEVEL')">next</div>
     </div>
   `;
 }

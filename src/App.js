@@ -3,13 +3,17 @@ import { connect } from "./store";
 
 import TitleScreen from "./TitleScreen";
 import LevelSelect from "./LevelSelect";
+import FindScreen from "./FindScreen";
 
 function App(current_scene) {
   switch (current_scene) {
-    case "TITLE_SCREEN":
+    case "SCENE_TITLE":
       return TitleScreen();
-    case "LEVEL_SELECT":
+    case "SCENE_LEVELS":
       return LevelSelect();
+    case "SCENE_FIND":
+      return FindScreen();
+    case "SCENE_PLAY":
     default:
       return "";
   }
