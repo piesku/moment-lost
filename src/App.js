@@ -7,21 +7,17 @@ import FindScreen from "./FindScreen";
 import ScoreScreen from "./ScoreScreen";
 import PlayOverlay from "./PlayOverlay";
 
+const scenes = {
+  "SCENE_TITLE": TitleScreen,
+  "SCENE_LEVELS": LevelSelect,
+  "SCENE_FIND": FindScreen,
+  "SCENE_SCORE": ScoreScreen,
+  "SCENE_PLAY": PlayOverlay,
+};
+
 function App(current_scene) {
-  switch (current_scene) {
-    case "SCENE_TITLE":
-      return TitleScreen();
-    case "SCENE_LEVELS":
-      return LevelSelect();
-    case "SCENE_FIND":
-      return FindScreen();
-    case "SCENE_SCORE":
-      return ScoreScreen();
-    case "SCENE_PLAY":
-      return PlayOverlay();
-    default:
-      return "";
-  }
+  const component = scenes[current_scene];
+  return component ? component() : "";
 }
 
 export default connect(
