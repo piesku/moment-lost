@@ -50,7 +50,11 @@ export function create_game() {
   return game;
 }
 
-export function generate_snapshot(game) {
+export function take_snapshot(game) {
+  return game.canvas.toDataURL();
+}
+
+export function create_level(game) {
   game.camera.position = [
     integer_between(-100, 100),
     1.5,

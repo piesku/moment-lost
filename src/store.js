@@ -1,11 +1,13 @@
 import { create_store } from "./inny";
 import {
-  create_game, generate_snapshot, start_level, end_level, destroy_level
+  create_game, create_level, start_level, end_level, destroy_level,
+  take_snapshot
 } from "./game";
 
 const default_state = {
   current_scene: "SCENE_TITLE",
   current_game: null,
+  target_snapshot: null,
   results: [],
 };
 
@@ -18,18 +20,20 @@ function reducer(state = default_state, action, args) {
     case "PLAY_NOW":
     case "PLAY_LEVEL": {
       const current_game = create_game();
-      generate_snapshot(current_game);
+      create_level(current_game);
       return merge(state, {
         current_scene: "SCENE_FIND",
-        current_game
+        current_game,
       });
     }
     case "START_LEVEL": {
       const { current_game } = state;
       // current_game.canvas.requestPointerLock();
+      const target_snapshot = take_snapshot(current_game);
       start_level(current_game);
       return merge(state, {
         current_scene: "SCENE_PLAY",
+        target_snapshot
       });
     }
     case "VALIDATE_SNAPSHOT": {
