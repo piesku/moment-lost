@@ -11,7 +11,8 @@ function LevelScore(num) {
 
 function LevelSelect(results) {
   return html`
-    <div class="ui">
+    <div class="ui"
+      style="background-color: #000">
       <div style="
         display: flex;
         flex-wrap: wrap;

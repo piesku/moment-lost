@@ -73,14 +73,8 @@ export function start_level(game) {
 }
 
 export function end_level(game) {
-  game.camera.keyboard_controlled = false;
-  game.camera.mouse_controlled = false;
+  game.stop();
   // Compare the position and the orientation of the camera with the target.
   // Target can be an empty entity in the game.
   return Math.random();
-}
-
-export function destroy_level(game) {
-  game.clear_color = "#000000";
-  game.stop();
 }
