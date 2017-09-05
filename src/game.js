@@ -51,7 +51,11 @@ export function create_game() {
 }
 
 export function take_snapshot(game) {
-  return game.canvas.toDataURL();
+  game.on("afterrender", function take() {
+    game.off("afterrender", take);
+    const snap = game.canvas.toDataURL();
+    window.dispatch('SNAPSHOT_TAKEN', snap);
+  });
 }
 
 export function create_level(game) {

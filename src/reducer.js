@@ -19,19 +19,24 @@ export default function reducer(state = init, action, args) {
     case "PLAY_LEVEL": {
       const current_game = create_game();
       create_level(current_game);
+      take_snapshot(current_game);
       return merge(state, {
         current_scene: "SCENE_FIND",
         current_game,
       });
     }
+    case "SNAPSHOT_TAKEN": {
+      const [target_snapshot] = args;
+      return merge(state, {
+        target_snapshot
+      });
+    }
     case "START_LEVEL": {
       const { current_game } = state;
       // current_game.canvas.requestPointerLock();
-      const target_snapshot = take_snapshot(current_game);
       start_level(current_game);
       return merge(state, {
         current_scene: "SCENE_PLAY",
-        target_snapshot
       });
     }
     case "VALIDATE_SNAPSHOT": {
