@@ -1,4 +1,4 @@
-import html from "./inny";
+import html from "innerself";
 import { connect } from "./store";
 
 import TitleScreen from "./TitleScreen";
@@ -15,11 +15,9 @@ const scenes = {
   "SCENE_PLAY": PlayOverlay,
 };
 
-function App(current_scene) {
+function App({current_scene}) {
   const component = scenes[current_scene];
   return component ? component() : "";
 }
 
-export default connect(
-  state => state.current_scene
-)(App);
+export default connect(App);

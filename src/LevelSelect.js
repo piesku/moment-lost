@@ -1,15 +1,16 @@
-import html from "./inny";
+import html from "innerself";
 import { connect } from "./store";
 
 function LevelScore(num) {
+  const percent = Math.floor(num * 100);
   return html`
      <div class="box"
        style="padding: .5rem">
-       ${num}%</div>
+       ${percent}%</div>
   `;
 }
 
-function LevelSelect(results) {
+function LevelSelect({results}) {
   return html`
     <div class="ui"
       style="background-color: #000">
@@ -27,6 +28,4 @@ function LevelSelect(results) {
   `;
 }
 
-export default connect(
-  state => state.results.map(num => Math.floor(num * 100))
-)(LevelSelect);
+export default connect(LevelSelect);

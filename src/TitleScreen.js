@@ -1,4 +1,4 @@
-import html from "./inny";
+import html from "innerself";
 
 export default function TitleScreen() {
   return html`

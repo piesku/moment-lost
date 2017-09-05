@@ -1,22 +1,17 @@
-import html from "./inny";
+import html from "innerself";
 import { connect } from "./store";
 
-function ScoreScreen(props) {
+function ScoreScreen({results, target_snapshot}) {
+  const score = Math.floor(results[results.length - 1]) * 100;
   return html`
     <img class="ui"
       style="opacity: .5"
-      src="${props.target_snapshot}">
+      src="${target_snapshot}">
     <div class="ui action"
       onclick="dispatch('PLAY_AGAIN')">
-      <div>${props.score}%</div>
+      <div>${score}%</div>
     </div>
   `;
 }
 
-function selector(state) {
-  const { results, target_snapshot } = state;
-  const score = Math.floor(results[results.length - 1]) * 100;
-  return { score, target_snapshot };
-}
-
-export default connect(selector)(ScoreScreen);
+export default connect(ScoreScreen);
