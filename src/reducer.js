@@ -1,6 +1,5 @@
-import {
-  create_game, create_level, start_level, end_level, take_snapshot
-} from "./game";
+import { create_game, create_level, start_level, end_level }
+  from "./game";
 
 const init = {
   current_scene: "SCENE_TITLE",
@@ -19,7 +18,6 @@ export default function reducer(state = init, action, args) {
     case "PLAY_LEVEL": {
       const current_game = create_game();
       create_level(current_game);
-      take_snapshot(current_game);
       return merge(state, {
         current_scene: "SCENE_FIND",
         current_game,

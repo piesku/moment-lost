@@ -37,20 +37,19 @@ export function create_game() {
   return game;
 }
 
-export function take_snapshot(game) {
-  game.on("afterrender", function take() {
-    game.off("afterrender", take);
-    const snap = game.canvas.toDataURL();
-    window.dispatch('SNAPSHOT_TAKEN', snap);
-  });
-}
-
 export function create_level(game) {
   game.camera.position = [
     random.integer_between(-100, 100),
     1.5,
     random.integer_between(-20, 20)
   ];
+
+  game.on("afterrender", function take_snapshot() {
+    game.off("afterrender", take_snapshot);
+    const snap = game.canvas.toDataURL();
+    window.dispatch('SNAPSHOT_TAKEN', snap);
+    game.stop();
+  });
 }
 
 export function start_level(game) {
@@ -61,6 +60,8 @@ export function start_level(game) {
   for (const entity of game.entities) {
     entity.color = "#000000";
   }
+
+  game.start();
 }
 
 export function end_level(game) {
