@@ -1,26 +1,32 @@
 import { Game } from "cervus/core";
 import { Plane, Box } from "cervus/shapes";
 import { basic } from "cervus/materials";
+import { quat } from "cervus/math";
 import * as random from "./random";
 
-export function create_game() {
+const WORLD_SIZE = 1000;
+
+export function create_level() {
   const game = new Game({
     width: window.innerWidth,
     height: window.innerHeight,
     clear_color: "#eeeeee",
-    far: 1000
+    far: WORLD_SIZE
   });
-
-  const color = random.color();
 
   game.camera.keyboard_controlled = false;
   game.camera.mouse_controlled = false;
   game.camera.move_speed = 10;
 
+  game.camera.position = random.position([0, 0], WORLD_SIZE / 3);
+  game.camera.look_at(random.look_at_target(game.camera));
+
+  const color = random.color();
+
   game.add(new Plane({
     material: basic,
     color,
-    scale: [1000, 1, 1000]
+    scale: [WORLD_SIZE, 1, WORLD_SIZE]
   }));
 
   for (let i = 0; i < 20; i++) {
@@ -34,26 +40,21 @@ export function create_game() {
     }));
   }
 
-  return game;
-}
-
-export function create_level(game) {
-  game.camera.position = [
-    random.integer_between(-100, 100),
-    1.5,
-    random.integer_between(-20, 20)
-  ];
-
   game.on("afterrender", function take_snapshot() {
     game.off("afterrender", take_snapshot);
     const snap = game.canvas.toDataURL();
-    window.dispatch('SNAPSHOT_TAKEN', snap);
+    window.dispatch(
+      'SNAPSHOT_TAKEN', snap, game.camera.position, game.camera.rotation
+    );
     game.stop();
   });
+
+  return game;
 }
 
 export function start_level(game) {
-  game.camera.position = [0, 1.5, 0];
+  game.camera.position = random.position([0, 0], WORLD_SIZE / 2);
+  game.camera.rotation = quat.create();
   game.camera.keyboard_controlled = true;
   game.camera.mouse_controlled = true;
 
