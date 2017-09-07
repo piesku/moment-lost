@@ -15,8 +15,8 @@ const scenes = {
   "SCENE_PLAY": PlayOverlay,
 };
 
-function App({current_scene}) {
-  const component = scenes[current_scene];
+function App({scene}) {
+  const component = scenes[scene];
   return component ? component() : "";
 }
 

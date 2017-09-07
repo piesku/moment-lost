@@ -1,8 +1,8 @@
 import { create_level, start_level, end_level } from "./game";
 
 const init = {
-  current_scene: "SCENE_TITLE",
-  current_level: null,
+  scene: "SCENE_TITLE",
+  level: null,
   target: null,
   results: [],
 };
@@ -15,10 +15,10 @@ export default function reducer(state = init, action, args) {
   switch (action) {
     case "PLAY_NOW":
     case "PLAY_LEVEL": {
-      const current_level = create_level();
+      const level = create_level();
       return merge(state, {
-        current_scene: "SCENE_FIND",
-        current_level,
+        scene: "SCENE_FIND",
+        level,
       });
     }
     case "SNAPSHOT_TAKEN": {
@@ -26,26 +26,26 @@ export default function reducer(state = init, action, args) {
       return merge(state, { target });
     }
     case "START_LEVEL": {
-      const { current_level } = state;
-      // current_level.canvas.requestPointerLock();
-      start_level(current_level);
+      const { level } = state;
+      // level.canvas.requestPointerLock();
+      start_level(level);
       return merge(state, {
-        current_scene: "SCENE_PLAY",
+        scene: "SCENE_PLAY",
       });
     }
     case "VALIDATE_SNAPSHOT": {
-      const { current_level, target, results } = state;
-      const score = end_level(current_level, target);
+      const { level, target, results } = state;
+      const score = end_level(level, target);
       return merge(state, {
-        current_scene: "SCENE_SCORE",
+        scene: "SCENE_SCORE",
         results: [...results, score]
       });
     }
     case "PLAY_AGAIN":
-      const { current_level } = state;
+      const { level } = state;
       return merge(state, {
-        current_scene: "SCENE_LEVELS",
-        current_level: null
+        scene: "SCENE_LEVELS",
+        level: null
       });
     default:
       return state;
