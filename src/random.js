@@ -1,5 +1,4 @@
 import { vec3 } from "cervus/math";
-import { rgb_to_hex, hsl_to_rgb } from "cervus/utils";
 
 export function integer(min = 0, max = 1) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -11,11 +10,6 @@ export function float(min = 0, max = 1) {
 
 export function element_of(arr) {
   return arr[integer(0, arr.length - 1)];
-}
-
-export function color() {
-  const rgb = hsl_to_rgb(Math.random(), 0.7, 0.6);
-  return rgb_to_hex(rgb);
 }
 
 /*

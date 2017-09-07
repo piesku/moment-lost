@@ -3,6 +3,7 @@ import { create_level, start_level, end_level } from "./game";
 const init = {
   scene: "SCENE_TITLE",
   level: null,
+  hue: 0,
   target: null,
   results: [],
 };
@@ -15,10 +16,12 @@ export default function reducer(state = init, action, args) {
   switch (action) {
     case "PLAY_NOW":
     case "PLAY_LEVEL": {
-      const level = create_level();
+      const hue = Math.random();
+      const level = create_level(hue);
       return merge(state, {
         scene: "SCENE_FIND",
         level,
+        hue
       });
     }
     case "SNAPSHOT_TAKEN": {
@@ -26,9 +29,9 @@ export default function reducer(state = init, action, args) {
       return merge(state, { target });
     }
     case "START_LEVEL": {
-      const { level } = state;
+      const { level, hue, target } = state;
       // level.canvas.requestPointerLock();
-      start_level(level);
+      start_level(level, hue, target);
       return merge(state, {
         scene: "SCENE_PLAY",
       });
