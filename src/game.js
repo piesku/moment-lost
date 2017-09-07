@@ -2,7 +2,9 @@ import { Game } from "cervus/core";
 import { Plane, Box } from "cervus/shapes";
 import { basic } from "cervus/materials";
 import { quat } from "cervus/math";
+
 import * as random from "./random";
+import get_score from "./score";
 
 const WORLD_SIZE = 1000;
 
@@ -42,10 +44,12 @@ export function create_level() {
 
   game.on("afterrender", function take_snapshot() {
     game.off("afterrender", take_snapshot);
-    const snap = game.canvas.toDataURL();
-    window.dispatch(
-      'SNAPSHOT_TAKEN', snap, game.camera.position, game.camera.rotation
-    );
+    const target = {
+      snapshot: game.canvas.toDataURL(),
+      position: game.camera.position,
+      rotation: game.camera.rotation,
+    };
+    window.dispatch('SNAPSHOT_TAKEN', target);
     game.stop();
   });
 
@@ -65,9 +69,7 @@ export function start_level(game) {
   game.start();
 }
 
-export function end_level(game) {
+export function end_level(game, target) {
   game.stop();
-  // Compare the position and the orientation of the camera with the target.
-  // Target can be an empty entity in the game.
-  return Math.random();
+  return get_score(target, game.camera, WORLD_SIZE);
 }

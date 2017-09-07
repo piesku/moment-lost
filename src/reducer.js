@@ -3,9 +3,7 @@ import { create_level, start_level, end_level } from "./game";
 const init = {
   current_scene: "SCENE_TITLE",
   current_level: null,
-  target_snapshot: null,
-  target_position: null,
-  target_rotation: null,
+  target: null,
   results: [],
 };
 
@@ -24,12 +22,8 @@ export default function reducer(state = init, action, args) {
       });
     }
     case "SNAPSHOT_TAKEN": {
-      const [target_snapshot, target_position, target_rotation] = args;
-      return merge(state, {
-        target_snapshot,
-        target_position,
-        target_rotation,
-      });
+      const [target] = args;
+      return merge(state, { target });
     }
     case "START_LEVEL": {
       const { current_level } = state;
@@ -40,8 +34,8 @@ export default function reducer(state = init, action, args) {
       });
     }
     case "VALIDATE_SNAPSHOT": {
-      const { current_level, results } = state;
-      const score = end_level(current_level);
+      const { current_level, target, results } = state;
+      const score = end_level(current_level, target);
       return merge(state, {
         current_scene: "SCENE_SCORE",
         results: [...results, score]
