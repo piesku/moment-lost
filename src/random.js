@@ -25,7 +25,7 @@ export function position([x, z], max_radius, y = 1.5) {
   );
 }
 
-export function look_at_target(entity) {
+export function look_at_target(matrix) {
   const azimuth = float(0, Math.PI * 2);
   const polar = float(0, Math.PI / 6);
 
@@ -35,5 +35,5 @@ export function look_at_target(entity) {
     Math.cos(polar) * Math.cos(azimuth)
   );
   vec3.normalize(target, target);
-  return vec3.transform_mat4(target, target, entity.matrix);
+  return vec3.transform_mat4(target, target, matrix);
 }
