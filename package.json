@@ -10,7 +10,7 @@
     "dev": "./node_modules/.bin/rollup -c rollup-dev.js -w"
   },
   "dependencies": {
-    "cervus": "^0.0.17",
+    "cervus": "^0.0.18",
     "innerself": "0.0.4"
   },
   "devDependencies": {
