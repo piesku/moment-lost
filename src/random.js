@@ -21,7 +21,6 @@ export function element_of(arr) {
   return arr[integer(0, arr.length - 1)];
 }
 
-window.float = float;
 /*
  * Random position inside of a circle.
  */

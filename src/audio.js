@@ -1,4 +1,13 @@
-import * as random from "./random";
+// Audio doesn't use the seeded RNG from ./random because we don't know how
+// much time the user is playing and how many notes will play.
+
+function integer(min = 0, max = 1) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function element_of(arr) {
+  return arr[integer(0, arr.length - 1)];
+}
 
 const context = new AudioContext();
 const volume = 1;
@@ -17,8 +26,6 @@ function impulse(duration, decay) {
   const impulseR = impulse.getChannelData(1);
 
   for (let i = 0; i < length; i++) {
-    // Generate white-noise for the echo.  It doesn't need to be generated with
-    // our seeded RNG.
     impulseL[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
     impulseR[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
   }
@@ -56,7 +63,7 @@ function play(freq) {
 };
 
 export function play_music() {
-   const note = random.element_of(Object.values(notes));
+   const note = element_of(Object.values(notes));
    play(note);
-   setTimeout(play_music, 2000 + random.integer(0, 10000));
+   setTimeout(play_music, 2000 + integer(0, 10000));
 }
