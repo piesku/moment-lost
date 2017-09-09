@@ -6,13 +6,11 @@ import * as random from "./random";
 
 export const element = (i, color) => {
   let elements = [];
-  const e = random.integer(0, 2);
-
   const sign_x = Math.cos(i * Math.PI);
   const sign_z = Math.cos(i * Math.PI);
   const x = 75 + 100 * Math.sin(i * Math.PI / 6);
 
-  switch (e) {
+  switch (random.integer(0, 2)) {
     case 0:
     case 1:
       // building

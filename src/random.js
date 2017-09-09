@@ -18,10 +18,10 @@ export function float(min = 0, max = 1) {
 }
 
 export function element_of(arr) {
-  arr = Array.from(arr);
   return arr[integer(0, arr.length - 1)];
 }
 
+window.float = float;
 /*
  * Random position inside of a circle.
  */
@@ -36,7 +36,7 @@ export function position([x, z], max_radius, y = 1.5) {
 }
 
 export function look_at_target(matrix) {
-  const azimuth = float(-Math.PI/8, Math.PI/8);
+  const azimuth = float(-Math.PI/10, Math.PI/10);
   const polar = float(0, Math.PI / 6);
 
   const target = vec3.of(

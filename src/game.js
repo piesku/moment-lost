@@ -14,6 +14,8 @@ const SATURATION = 0.7;
 const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
 
+const props = [];
+
 function hex(hue, lum) {
   const rgb = hsl_to_rgb(hue, SATURATION, lum);
   return rgb_to_hex(rgb);
@@ -44,15 +46,16 @@ export function create_level(lvl_number, hue) {
 
   game.add(floor);
 
-  for (let i = 0; i < Math.pow(lvl_number, random.integer(1, 3)); i++) {
+  for (let i = 0; i < Math.pow(lvl_number, 2) + 1; i++) {
     element(i, color).forEach((el) => {
+      props.push(el);
       game.add(el);
     });
   }
 
   game.camera.get_component(Transform).position = random.position([0, 0], WORLD_SIZE / 3);
   game.camera.get_component(Transform).look_at(
-    random.element_of(game.entities).get_component(Transform).matrix
+    random.element_of(props).get_component(Transform).position
   );
   game.camera.get_component(Transform).look_at(
     random.look_at_target(game.camera.get_component(Transform).matrix)
