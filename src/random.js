@@ -1,14 +1,24 @@
 import { vec3 } from "cervus/math";
+const SEED = 19870603;
+
+const rand = (function() {
+  let seed = SEED;
+  return function() {
+    seed = seed * 16807 % 2147483647;
+    return (seed -1) / 2147483646;
+  }
+})();
 
 export function integer(min = 0, max = 1) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+  return Math.floor(rand() * (max - min + 1) + min);
 }
 
 export function float(min = 0, max = 1) {
-  return Math.random() * (max - min) + min;
+  return rand() * (max - min) + min;
 }
 
 export function element_of(arr) {
+  arr = Array.from(arr);
   return arr[integer(0, arr.length - 1)];
 }
 
@@ -26,7 +36,7 @@ export function position([x, z], max_radius, y = 1.5) {
 }
 
 export function look_at_target(matrix) {
-  const azimuth = float(0, Math.PI * 2);
+  const azimuth = float(-Math.PI/8, Math.PI/8);
   const polar = float(0, Math.PI / 6);
 
   const target = vec3.of(
