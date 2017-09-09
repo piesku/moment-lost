@@ -1,4 +1,5 @@
 import { create_level, start_level, end_level } from "./game";
+import { play_music } from "./audio";
 import * as random from "./random";
 
 const init = {
@@ -15,6 +16,12 @@ function merge(...objs) {
 
 export default function reducer(state = init, action, args) {
   switch (action) {
+    case "INIT": {
+      play_music();
+      return merge(state, {
+        scene: "SCENE_TITLE",
+      });
+    }
     case "PLAY_NOW":
     case "PLAY_LEVEL": {
       const hue = random.float(0, 1);

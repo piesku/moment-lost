@@ -32,7 +32,8 @@ export function create_level(lvl_number, hue) {
   game.camera.get_component(Move).set({
     keyboard_controlled: false,
     mouse_controlled: false,
-    move_speed: 100
+    move_speed: 10,
+    rotate_speed: .5,
   });
 
   const color = hex(hue, LUMINANCE);

@@ -4,5 +4,7 @@ import reducer from "./reducer";
 
 const { attach, connect, dispatch } =
   create_store(with_logger(reducer));
+
+dispatch("INIT");
 window.dispatch = dispatch;
 export { attach, connect };
