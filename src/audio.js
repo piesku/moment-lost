@@ -10,12 +10,27 @@ function element_of(arr) {
 }
 
 const context = new AudioContext();
+
+// https://en.wikipedia.org/wiki/Piano_key_frequencies
 const notes = [
-  440,
-  523.251,
-  587.33,
-  659.255,
-  783.991,
+  // The "A" harmonic minor scale.
+  220,       // A3
+  246.942,   // B
+  261.626,   // C
+  293.665,   // D
+  329.628,   // E
+  349.228,   // F
+  //391.995, // G
+  415.305,   // G#
+  440        // A4
+
+  // The "A" minor pentatonic scale.
+  // 440,       // A4
+  // 523.251,   // C
+  // 587.33,    // D
+  // 659.255,   // E
+  // 783.991,   // G
+
 ];
 
 function impulse(duration, decay) {
@@ -36,7 +51,7 @@ function impulse(duration, decay) {
 // Soften the high tones.
 const biquad_filter = context.createBiquadFilter();
 biquad_filter.type = "lowpass";
-biquad_filter.frequency.value = 200;
+biquad_filter.frequency.value = 100;
 biquad_filter.Q.value = 10;
 
 const reverb = context.createConvolver();
