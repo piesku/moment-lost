@@ -4349,11 +4349,6 @@ function start_level(game, hue, target) {
 
 function end_level(game, target) {
   game.stop();
-  // Clear entities and event handlers.
-  game.reset();
-  // Remove keyboard and mouse event listeners.
-  // XXX Uncomment in Cervus 0.0.19
-  // game.destroy();
   return get_score(target, game.camera, WORLD_SIZE);
 }
 
