@@ -35,10 +35,13 @@ export function get_hint(target, camera, world_size) {
   const to_target = rotation_score(transform.rotation, dummy.rotation);
 
   // Weigh the current rotation on an ascending quarter circle and the
-  // to_target rotation on a descending one.
+  // to_target rotation on a descending one.  The sum of the weights is
+  // always 1.  This essentially translates to:  the closer to the target the
+  // user is, the more the alignment with the target's rotation counts, and the
+  // less the fact that they're looking _at_ the target does.
   const r = current * (1 - smooth(p)) + to_target * smooth(p);
 
-  // Halve the avergae so that it's not too obvious.
+  // Halve the average so that the hint in not too obvious.
   return (p + r) / 2 / 2;
 }
 
@@ -47,9 +50,9 @@ export function get_score(target, camera, world_size) {
   const dummy = camera.get_component(DummyLookAt);
 
   const p = position_score(target.position, transform.position, world_size);
-  const current = rotation_score(target.rotation, transform.rotation);
-  // Weigh the rotation on an ascending quarter circle.
-  const r = current * (1 - smooth(p));
+  const r = rotation_score(target.rotation, transform.rotation);
 
-  return (p + r) / 2;
+  // See https://slack-files.com/T137YH5CK-F70S69J0J-51a91c0eaa
+  // The division normalizes the result in the [0, 1] range.
+  return (p * Math.sin(r) + r * Math.sin(p)) / (2 * Math.sin(1));
 }
