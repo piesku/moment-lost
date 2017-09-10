@@ -10,13 +10,13 @@ function element_of(arr) {
 }
 
 const context = new AudioContext();
-const notes = {
-  "a": 440,
-  "c": 523.251,
-  "d": 587.33,
-  "e": 659.255,
-  "g": 783.991,
-};
+const notes = [
+  440,
+  523.251,
+  587.33,
+  659.255,
+  783.991,
+];
 
 function impulse(duration, decay) {
   const length = context.sampleRate	* duration;
@@ -62,7 +62,7 @@ function play_note(freq) {
 }
 
 export function play_music() {
-  const note = element_of(Object.values(notes));
+  const note = element_of(notes);
   play_note(note);
   setTimeout(play_music, 2000 + integer(0, 10000));
 }
