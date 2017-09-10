@@ -7,7 +7,7 @@ import { rgb_to_hex, hsl_to_rgb } from "cervus/utils";
 
 import { element } from "./level-elements.js";
 import * as random from "./random";
-import get_score from "./score";
+import { RotationCompare, get_score } from "./score";
 import Walk from "./walking";
 
 const WORLD_SIZE = 1000;
@@ -87,6 +87,7 @@ export function start_level(game, hue, target) {
   });
   game.camera.get_component(Walk).keyboard_controlled = true;
   game.camera.get_component(Walk).mouse_controlled = true;
+  game.camera.add_component(new RotationCompare({target}));
 
   for (const entity of game.entities) {
     entity.get_component(Render).color = "#000000";
@@ -105,5 +106,9 @@ export function start_level(game, hue, target) {
 
 export function end_level(game, target) {
   game.stop();
+  // Clear entities and event handlers.
+  game.reset();
+  // Remove keyboard and mouse event listeners.
+  game.destroy();
   return get_score(target, game.camera.get_component(Transform), WORLD_SIZE);
 }
