@@ -872,25 +872,7 @@ function create$1() {
  * @param {mat4} out the receiving matrix
  * @returns {mat4} out
  */
-function identity(out) {
-  out[0] = 1;
-  out[1] = 0;
-  out[2] = 0;
-  out[3] = 0;
-  out[4] = 0;
-  out[5] = 1;
-  out[6] = 0;
-  out[7] = 0;
-  out[8] = 0;
-  out[9] = 0;
-  out[10] = 1;
-  out[11] = 0;
-  out[12] = 0;
-  out[13] = 0;
-  out[14] = 0;
-  out[15] = 1;
-  return out;
-}
+
 
 /**
  * Transpose the values of a mat4
@@ -1390,7 +1372,7 @@ function lookAt(out, eye, center, up) {
   if (Math.abs(eyex - centerx) < EPSILON &&
       Math.abs(eyey - centery) < EPSILON &&
       Math.abs(eyez - centerz) < EPSILON) {
-    return identity(out);
+    return mat4.identity(out);
   }
 
   z0 = eyex - centerx;
@@ -2915,6 +2897,7 @@ class Entity {
 
   add_component(component) {
     component.entity = this;
+    component.mount();
     this.components.set(component.constructor, component);
   }
 
@@ -2965,13 +2948,28 @@ class Component {
     Object.assign(this,  default_options$3, options);
   }
 
+  /*
+   * Called in Entity.add_component.
+   *
+   * Use this to intialize the component instance. this.entity is available
+   * here.
+   */
+  mount() {
+  }
+
   set(values) {
     Object.assign(this, values);
   }
 
+  /*
+   * Called on each tick.
+   */
   update() {
   }
 
+  /*
+   * Called on each animation frame.
+   */
   render() {
   }
 }
@@ -4108,10 +4106,13 @@ function get_hint(target, camera, world_size) {
   const to_target = rotation_score(transform.rotation, dummy.rotation);
 
   // Weigh the current rotation on an ascending quarter circle and the
-  // to_target rotation on a descending one.
+  // to_target rotation on a descending one.  The sum of the weights is
+  // always 1.  This essentially translates to:  the closer to the target the
+  // user is, the more the alignment with the target's rotation counts, and the
+  // less the fact that they're looking _at_ the target does.
   const r = current * (1 - smooth(p)) + to_target * smooth(p);
 
-  // Halve the avergae so that it's not too obvious.
+  // Halve the average so that the hint in not too obvious.
   return (p + r) / 2 / 2;
 }
 
@@ -4120,11 +4121,11 @@ function get_score(target, camera, world_size) {
   const dummy = camera.get_component(DummyLookAt);
 
   const p = position_score(target.position, transform.position, world_size);
-  const current = rotation_score(target.rotation, transform.rotation);
-  // Weigh the rotation on an ascending quarter circle.
-  const r = current * (1 - smooth(p));
+  const r = rotation_score(target.rotation, transform.rotation);
 
-  return (p + r) / 2;
+  // See https://slack-files.com/T137YH5CK-F70S69J0J-51a91c0eaa
+  // The division normalizes the result in the [0, 1] range.
+  return (p * Math.sin(r) + r * Math.sin(p)) / (2 * Math.sin(1));
 }
 
 // Audio doesn't use the seeded RNG from ./random because we don't know how
@@ -4234,17 +4235,18 @@ function play_footstep(freq = 50) {
   oscillator.stop(end_time);
 }
 
-class Walk extends Move {
-  constructor(options) {
-    super(options);
-    this.traveled = 0;
+class Footsteps extends Component {
+  mount() {
+    this.transform = this.entity.get_component(Transform);
     this.footstep_every = 15;
+    this.prev_position = this.transform.position;
+
+    this.traveled = 0;
   }
-  handle_keys(tick_delta, keys) {
-    const transform = this.entity.get_component(Transform);
-    const prev_position = transform.position;
-    super.handle_keys(tick_delta, keys);
-    this.traveled += distance$2(prev_position, transform.position);
+
+  update() {
+    this.traveled += distance$2(this.prev_position, this.transform.position);
+    this.prev_position = this.transform.position;
 
     if (this.traveled > this.footstep_every) {
       this.traveled %= this.footstep_every;
@@ -4273,9 +4275,7 @@ function create_level(lvl_number, hue) {
     far: WORLD_SIZE
   });
 
-  // XXX Add Entity.remove_component to Cervus.
-  game.camera.components.delete(Move);
-  game.camera.add_component(new Walk({
+  game.camera.add_component(new Move({
     keyboard_controlled: false,
     mouse_controlled: false,
     move_speed: 25,
@@ -4328,9 +4328,11 @@ function start_level(game, hue, target) {
     position: [0, PLAYER_HEIGHT, 0],
     rotation: create$2()
   });
-  game.camera.get_component(Walk).keyboard_controlled = true;
-  game.camera.get_component(Walk).mouse_controlled = true;
+
+  game.camera.get_component(Move).keyboard_controlled = true;
+  game.camera.get_component(Move).mouse_controlled = true;
   game.camera.add_component(new DummyLookAt({target}));
+  game.camera.add_component(new Footsteps());
 
   for (const entity of game.entities) {
     entity.get_component(Render).color = "#000000";
