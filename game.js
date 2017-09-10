@@ -872,7 +872,25 @@ function create$1() {
  * @param {mat4} out the receiving matrix
  * @returns {mat4} out
  */
-
+function identity(out) {
+  out[0] = 1;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = 1;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = 1;
+  out[11] = 0;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = 0;
+  out[15] = 1;
+  return out;
+}
 
 /**
  * Transpose the values of a mat4
@@ -1372,7 +1390,7 @@ function lookAt(out, eye, center, up) {
   if (Math.abs(eyex - centerx) < EPSILON &&
       Math.abs(eyey - centery) < EPSILON &&
       Math.abs(eyez - centerz) < EPSILON) {
-    return mat4.identity(out);
+    return identity(out);
   }
 
   z0 = eyex - centerx;
@@ -3391,7 +3409,7 @@ class Game {
 
   destroy() {
     for (const event_name of EVENTS) {
-      window.removeEventListener(event_name, this[handler_name]);
+      window.removeEventListener(event_name, this[event_name]);
     }
   }
 
@@ -4057,6 +4075,20 @@ function distance$2(a, b) {
   return magnitude(dist);
 }
 
+class DummyLookAt extends Transform {
+  update() {
+    this.position = this.entity.get_component(Transform).position;
+    this.look_at(this.target.position);
+  }
+}
+
+/*
+ * Descending quarter circle for x in [0, 1].
+ */
+function smooth(x) {
+  return Math.sqrt(1 - x ** 2);
+}
+
 function position_score(target, current, world_size) {
   const dist = distance$2(target, current);
   const max_distance = Math.sqrt(world_size * world_size) / 2;
@@ -4067,12 +4099,31 @@ function rotation_score(target, current) {
   return Math.abs(dot$3(target, current));
 }
 
+function get_hint(target, camera, world_size) {
+  const transform = camera.get_component(Transform);
+  const dummy = camera.get_component(DummyLookAt);
+
+  const p = position_score(target.position, transform.position, world_size);
+  const current = rotation_score(target.rotation, transform.rotation);
+  const to_target = rotation_score(transform.rotation, dummy.rotation);
+
+  // Weigh the current rotation on an ascending quarter circle and the
+  // to_target rotation on a descending one.
+  const r = current * (1 - smooth(p)) + to_target * smooth(p);
+
+  // Halve the avergae so that it's not too obvious.
+  return (p + r) / 2 / 2;
+}
+
 function get_score(target, camera, world_size) {
-  const p = position_score(target.position, camera.position, world_size);
-  const r = rotation_score(target.rotation, camera.rotation);
-  // XXX This shouldn't be just a simple average.  If you're 1000 meters from
-  // the target but happen to be looking in the same direction, the score
-  // shouldn't be ~50%.
+  const transform = camera.get_component(Transform);
+  const dummy = camera.get_component(DummyLookAt);
+
+  const p = position_score(target.position, transform.position, world_size);
+  const current = rotation_score(target.rotation, transform.rotation);
+  // Weigh the rotation on an ascending quarter circle.
+  const r = current * (1 - smooth(p));
+
   return (p + r) / 2;
 }
 
@@ -4279,6 +4330,7 @@ function start_level(game, hue, target) {
   });
   game.camera.get_component(Walk).keyboard_controlled = true;
   game.camera.get_component(Walk).mouse_controlled = true;
+  game.camera.add_component(new DummyLookAt({target}));
 
   for (const entity of game.entities) {
     entity.get_component(Render).color = "#000000";
@@ -4287,17 +4339,22 @@ function start_level(game, hue, target) {
   game.start();
 
   game.on("afterrender", function hint() {
-    const score = get_score(target, game.camera.get_component(Transform), WORLD_SIZE);
+    const hint = get_hint(target, game.camera, WORLD_SIZE);
     // XXX Change color on the material instance?
     for (const entity of game.entities) {
-      entity.get_component(Render).color = hex(hue, LUMINANCE * score / 2);
+      entity.get_component(Render).color = hex(hue, LUMINANCE * hint);
     }
   });
 }
 
 function end_level(game, target) {
   game.stop();
-  return get_score(target, game.camera.get_component(Transform), WORLD_SIZE);
+  // Clear entities and event handlers.
+  game.reset();
+  // Remove keyboard and mouse event listeners.
+  // XXX Uncomment in Cervus 0.0.19
+  // game.destroy();
+  return get_score(target, game.camera, WORLD_SIZE);
 }
 
 const init = {
