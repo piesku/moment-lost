@@ -8,6 +8,7 @@ import { rgb_to_hex, hsl_to_rgb } from "cervus/utils";
 import { element } from "./level-elements.js";
 import * as random from "./random";
 import get_score from "./score";
+import Walk from "./walking";
 
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
@@ -29,12 +30,14 @@ export function create_level(lvl_number, hue) {
     far: WORLD_SIZE
   });
 
-  game.camera.get_component(Move).set({
+  // XXX Add Entity.remove_component to Cervus.
+  game.camera.components.delete(Move);
+  game.camera.add_component(new Walk({
     keyboard_controlled: false,
     mouse_controlled: false,
-    move_speed: 10,
+    move_speed: 25,
     rotate_speed: .5,
-  });
+  }));
 
   const color = hex(hue, LUMINANCE);
 
@@ -82,8 +85,8 @@ export function start_level(game, hue, target) {
     position: [0, PLAYER_HEIGHT, 0],
     rotation: quat.create()
   });
-  game.camera.get_component(Move).keyboard_controlled = true;
-  game.camera.get_component(Move).mouse_controlled = true;
+  game.camera.get_component(Walk).keyboard_controlled = true;
+  game.camera.get_component(Walk).mouse_controlled = true;
 
   for (const entity of game.entities) {
     entity.get_component(Render).color = "#000000";

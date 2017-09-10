@@ -1,15 +1,9 @@
-import { vec3 } from "cervus/math";
-
-function dot(a, b) {
-  return a.reduce((acc, cur, idx) => acc + cur * b[idx], 0);
-}
+import { distance, dot } from "./math";
 
 function position_score(target, current, world_size) {
-  const position_diff = vec3.zero.slice();
-  vec3.subtract(position_diff, target, current);
-  const distance = Math.sqrt(dot(position_diff, position_diff));
+  const dist = distance(target, current);
   const max_distance = Math.sqrt(world_size * world_size) / 2;
-  return 1 - distance / max_distance;
+  return 1 - dist / max_distance;
 }
 
 function rotation_score(target, current) {

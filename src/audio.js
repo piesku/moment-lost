@@ -10,7 +10,6 @@ function element_of(arr) {
 }
 
 const context = new AudioContext();
-const volume = 1;
 const notes = {
   "a": 440,
   "c": 523.251,
@@ -46,24 +45,47 @@ reverb.buffer = impulse(10, 10);
 biquad_filter.connect(reverb);
 reverb.connect(context.destination);
 
-function play(freq) {
-  const osc = context.createOscillator();
-  osc.type = "sine";
-  osc.frequency.value = freq;
+function play_note(freq) {
+  const oscillator = context.createOscillator();
+  oscillator.type = "sine";
+  oscillator.frequency.value = freq;
 
   const envelope = context.createGain();
-  envelope.gain.setTargetAtTime(volume, context.currentTime, .1);
+  envelope.gain.setTargetAtTime(1, context.currentTime, .1);
   envelope.gain.setTargetAtTime(0, context.currentTime + 1, .1);
 
-  osc.connect(envelope);
+  oscillator.connect(envelope);
   envelope.connect(biquad_filter);
 
-  osc.start();
-  osc.stop(context.currentTime + 10);
-};
+  oscillator.start();
+  oscillator.stop(context.currentTime + 10);
+}
 
 export function play_music() {
-   const note = element_of(Object.values(notes));
-   play(note);
-   setTimeout(play_music, 2000 + integer(0, 10000));
+  const note = element_of(Object.values(notes));
+  play_note(note);
+  setTimeout(play_music, 2000 + integer(0, 10000));
+}
+
+export function play_footstep(freq = 50) {
+  const oscillator = context.createOscillator();
+  oscillator.frequency.value = freq;
+
+  const base = context.createOscillator();
+  base.frequency.value = freq - 20;
+
+  const envelope = context.createGain();
+  envelope.gain.value = 1.5;
+  envelope.gain.setTargetAtTime(0, context.currentTime + .005, 0.01);
+
+  base.connect(envelope);
+  oscillator.connect(envelope);
+  envelope.connect(context.destination);
+
+  base.start();
+  oscillator.start();
+
+  const end_time = context.currentTime + 0.1;
+  base.stop(end_time);
+  oscillator.stop(end_time);
 }
