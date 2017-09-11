@@ -47,7 +47,6 @@ export function get_hint(target, camera, world_size) {
 
 export function get_score(target, camera, world_size) {
   const transform = camera.get_component(Transform);
-  const dummy = camera.get_component(DummyLookAt);
 
   const p = position_score(target.position, transform.position, world_size);
   const r = rotation_score(target.rotation, transform.rotation);

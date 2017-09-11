@@ -4,13 +4,13 @@ import { basic } from "cervus/materials";
 
 import * as random from "./random";
 
-export const element = (i, color) => {
+export const element = (i, color, type) => {
   let elements = [];
   const sign_x = Math.cos(i * Math.PI);
   const sign_z = Math.cos(i * Math.PI);
   const x = 75 + 100 * Math.sin(i * Math.PI / 6);
 
-  switch (random.integer(0, 2)) {
+  switch (type) {
     case 0:
     case 1:
       // building
@@ -59,6 +59,17 @@ export const element = (i, color) => {
         color,
       });
       elements.push(crown);
+      break;
+    case 3:
+      const spawner = new Box();
+      spawner.get_component(Render).set({
+        color: '#000000',
+        material: basic
+      });
+      spawner.get_component(Transform).set({
+        position: [0, 1, 0]
+      });
+      elements.push(spawner);
       break;
   }
 

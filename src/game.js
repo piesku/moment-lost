@@ -10,12 +10,16 @@ import * as random from "./random";
 import { DummyLookAt, get_score, get_hint } from "./score";
 import Footsteps from "./footsteps";
 
+import { distance } from "gl-matrix/src/gl-matrix/vec3";
+import { spawn_birds } from "./bird";
+
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
 
-const props = [];
+let props = [];
+let spawners_positions = [];
 
 function hex(hue, lum) {
   const rgb = hsl_to_rgb(hue, SATURATION, lum);
@@ -23,6 +27,8 @@ function hex(hue, lum) {
 }
 
 export function create_level(lvl_number, hue) {
+  props = [];
+  spawners_positions = [];
   const game = new Game({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -49,7 +55,7 @@ export function create_level(lvl_number, hue) {
   game.add(floor);
 
   for (let i = 0; i < Math.pow(lvl_number, 2) + 1; i++) {
-    element(i, color).forEach((el) => {
+    element(i, color, random.integer(0, 2)).forEach((el) => {
       props.push(el);
       game.add(el);
     });
@@ -62,6 +68,20 @@ export function create_level(lvl_number, hue) {
   game.camera.get_component(Transform).look_at(
     random.look_at_target(game.camera.get_component(Transform).matrix)
   );
+
+  const spawners = random.integer(2, 4);
+  for (let i = 0; i < spawners; i++) {
+    const spawner_position = random.position([0, 0], WORLD_SIZE/3);
+    spawners_positions.push(spawner_position);
+
+    // XXX: Uncomment here to see birds' spawning points
+
+    // const bird_spawner = element(1, color, 3)[0];
+    // bird_spawner.get_component(Transform).set({
+    //   position: spawner_position
+    // });
+    // game.add(bird_spawner);
+  }
 
 
   game.on("afterrender", function take_snapshot() {
@@ -94,6 +114,16 @@ export function start_level(game, hue, target) {
   }
 
   game.start();
+
+  game.on("tick", () => {
+    for (let i = 0; i < spawners_positions.length; i++) {
+      if (distance(spawners_positions[i], game.camera.get_component(Transform).position) < 15) {
+        spawn_birds(spawners_positions[i], WORLD_SIZE/5, 25, game);
+        spawners_positions.splice(i, 1);
+        break;
+      }
+    }
+  });
 
   game.on("afterrender", function hint() {
     const hint = get_hint(target, game.camera, WORLD_SIZE);
