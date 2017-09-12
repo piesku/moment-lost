@@ -21,7 +21,6 @@ export default function reducer(state = init, action, args) {
       });
     }
     case "PLAY_LEVEL": {
-      const { results } = state;
       const [index] = args;
       const [level, hue] = create_level(index + 1);
       return merge(state, {
