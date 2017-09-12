@@ -6,7 +6,7 @@ function LevelScore(score, idx) {
   return html`
      <div class="box action"
        onclick="dispatch('PLAY_LEVEL', ${idx})"
-       style="padding: .5rem">
+       style="padding: .5rem; color: #666;">
        ${percent}</div>
   `;
 }
@@ -22,7 +22,7 @@ function LevelSelect({results}) {
         max-height: 720px">
       ${results.map(LevelScore)}
       <div class="action"
-        style="padding: .5rem; color: #999;"
+        style="padding: .5rem;"
         onclick="dispatch('PLAY_LEVEL', ${results.length})">next</div>
       </div>
     </div>
