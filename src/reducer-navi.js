@@ -10,18 +10,16 @@ export default function navigation(state = init, action, args) {
     case "TRANSITION": {
       const [next_scene, ...rest] = args;
 
-      setTimeout(dispatch, 1000, "GOTO_" + next_scene, ...rest)
-      setTimeout(dispatch, 2000, "TRANSITIONED");
+      setTimeout(window.dispatch, 1000, "GOTO_" + next_scene, ...rest)
+      setTimeout(window.dispatch, 2000, "TRANSITIONED");
 
-      return Object.assign({}, state, {
-        next_scene,
-      });
+      return merge(state, { next_scene });
     }
     case "TRANSITIONED": {
-      return Object.assign({}, state, { next_scene: null });
+      return merge(state, { next_scene: null });
     }
     case "INIT": {
-      setTimeout(dispatch, 1000, "TRANSITIONED");
+      setTimeout(window.dispatch, 1000, "TRANSITIONED");
       return state;
     }
     case "GOTO_SCENE_FIND":
@@ -29,9 +27,7 @@ export default function navigation(state = init, action, args) {
     case "GOTO_SCENE_SCORE":
     case "GOTO_SCENE_LEVELS": {
       const { next_scene } = state;
-      return Object.assign({}, state, {
-        current_scene: next_scene
-      });
+      return merge(state, { current_scene: next_scene });
     }
     default: {
       return state;

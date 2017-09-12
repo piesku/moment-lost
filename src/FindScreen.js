@@ -2,7 +2,7 @@ import html from "innerself";
 import Scene from "./Scene";
 import { connect } from "./store";
 
-function FindScreen({next_scene, hue, level}) {
+function FindScreen({next_scene, hue}) {
   const style = next_scene === "SCENE_PLAY"
     ? null
     : `background: hsl(${hue * 360}, 70%, 60%); `
