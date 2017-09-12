@@ -26,6 +26,12 @@ function rotation_score(target, current) {
   return Math.abs(dot(target, current));
 }
 
+/*
+ * Calculate the hint in range [0, 1].
+ *
+ * This takes into account the fact that the user might be looking _at_ the
+ * target, too.  The hint is only used to scale the luminance of the world.
+ */
 export function get_hint(target, camera, world_size) {
   const transform = camera.get_component(Transform);
   const dummy = camera.get_component(DummyLookAt);
@@ -45,6 +51,9 @@ export function get_hint(target, camera, world_size) {
   return (p + r) / 2 / 2;
 }
 
+/*
+ * Calculate the final score for the level in range [0, 1].
+ */
 export function get_score(target, camera, world_size) {
   const transform = camera.get_component(Transform);
 

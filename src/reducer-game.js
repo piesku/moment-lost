@@ -15,7 +15,7 @@ export default function reducer(state = init, action, args) {
       play_music();
       const saved_results = localStorage.getItem("results");
       const results = saved_results
-        ? saved_results.split(" ").map(x => parseFloat(x))
+        ? saved_results.split(" ").map(x => parseInt(x))
         : [];
       return merge(state, { results });
     }

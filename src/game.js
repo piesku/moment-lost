@@ -145,5 +145,6 @@ export function start_level(game, hue, target) {
 
 export function end_level(game, target) {
   game.stop();
-  return get_score(target, game.camera, WORLD_SIZE);
+  const score = get_score(target, game.camera, WORLD_SIZE);
+  return Math.floor(score * 100);
 }

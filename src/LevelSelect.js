@@ -3,12 +3,11 @@ import Scene from "./Scene";
 import { connect } from "./store";
 
 function LevelScore(score, idx) {
-  const percent = Math.floor(score * 100);
   return html`
      <div class="box action"
        onclick="goto('SCENE_FIND', ${idx})"
        style="padding: .5rem; color: #666;">
-       ${percent}</div>
+       ${score}</div>
   `;
 }
 

@@ -3,7 +3,6 @@ import Scene from "./Scene";
 import { connect } from "./store";
 
 function ScoreScreen({results, index, target}) {
-  const score = Math.floor(results[index] * 100);
   return Scene(
     {name: "SCENE_SCORE", from: "white", to: "black"},
     html`
@@ -12,7 +11,7 @@ function ScoreScreen({results, index, target}) {
         src="${target.snapshot}">
       <div class="ui action"
         onclick="goto('SCENE_LEVELS')">
-        <div>${score}/100</div>
+        <div>${results[index]}/100</div>
       </div>`
   );
 }
