@@ -4,6 +4,16 @@
 
   <title>A moment lost in time.</title>
   <style>
+    @keyframes fadeout {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
     html, body {
       padding: 0;
       margin: 0;
@@ -23,6 +33,15 @@
       align-items: center;
       justify-content: center;
       overflow-y: auto;
+      z-index: 1;
+    }
+
+    .fadein {
+      animation: fadein 1s forwards;
+    }
+
+    .fadeout {
+      animation: fadeout 1s forwards;
     }
 
     .action {
@@ -34,10 +53,13 @@
     .action:hover {
       color: #fff !important;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div id="root"></div>
-
   <script src="game.js"></script>
 </body>

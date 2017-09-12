@@ -22,13 +22,16 @@ export default function reducer(state = init, action, args) {
     }
     case "PLAY_LEVEL": {
       const [index] = args;
-      const [level, hue] = create_level(index + 1);
+      setTimeout(window.dispatch, 1000, "CREATE_LEVEL");
       return merge(state, {
         scene: "SCENE_FIND",
-        level,
         index,
-        hue
       });
+    }
+    case "CREATE_LEVEL": {
+      const { index } = state;
+      const [level, hue] = create_level(index + 1);
+      return merge(state, { level, hue });
     }
     case "SNAPSHOT_TAKEN": {
       const [target] = args;
@@ -60,6 +63,6 @@ export default function reducer(state = init, action, args) {
         level: null
       });
     default:
-      return state;
+      return Object.assign({}, init, state);
   }
 }
