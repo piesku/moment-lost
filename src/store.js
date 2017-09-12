@@ -19,6 +19,6 @@ const reducer = with_logger(chain(navigation_reducer, game_reducer));
 const { attach, connect, dispatch } =
   create_store(reducer);
 
-dispatch("INIT");
 window.dispatch = dispatch;
+dispatch("INIT");
 export { attach, connect };

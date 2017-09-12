@@ -17,12 +17,8 @@ export default function reducer(state = init, action, args) {
     }
     case "PLAY_LEVEL": {
       const [index] = args;
-      return merge(state, { index });
-    }
-    case "CREATE_LEVEL": {
-      const { index } = state;
       const [level, hue] = create_level(index + 1);
-      return merge(state, { level, hue });
+      return merge(state, { index, level, hue });
     }
     case "SNAPSHOT_TAKEN": {
       const [target] = args;
