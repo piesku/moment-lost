@@ -1,5 +1,5 @@
 import { vec3 } from "cervus/math";
-export const base_seed = 3061987;
+export const base_seed = 19870306 * 6647088;
 
 let seed = base_seed;
 
