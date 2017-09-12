@@ -22,7 +22,7 @@ function LevelSelect({results}) {
         max-height: 720px">
       ${results.map(LevelScore)}
       <div class="action"
-        style="padding: .5rem"
+        style="padding: .5rem; color: #999;"
         onclick="dispatch('PLAY_LEVEL', ${results.length})">next</div>
       </div>
     </div>
