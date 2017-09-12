@@ -1,42 +1,11 @@
 import { create_store } from "innerself";
 import with_logger from "innerself/logger";
-import game from "./reducer";
-
-const init = {
-  timeout: null
-}
-
-function transitions(state = init, action, args) {
-  const { timeout } = state;
-  switch (action) {
-    case "TRANSITION": {
-      if (timeout) {
-        return state;
-      }
-
-      for (const ui of document.querySelectorAll(".ui")) {
-        ui.classList.add("fadeout");
-      }
-      const [next_action, ...rest] = args;
-      return Object.assign({}, state, {
-        timeout: setTimeout(dispatch, 1000, next_action, ...rest)
-      });
-    }
-    default: {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-
-      return Object.assign({}, state, {
-        timeout: null
-      });
-    }
-  }
-}
+import navigation_reducer from "./reducer-navi";
+import game_reducer from "./reducer-game";
 
 function chain(...reducers) {
   // return reducers.reduce(
-  //   (acc, reducer) => (state, ...rest) => reducer(acc(state), ...rest)
+  //   (acc, reducer) => (state, ...rest) => reducer(acc(state, ...rest), ...rest)
   //   state => state
   // );
   return function(state, action, args) {
@@ -46,7 +15,7 @@ function chain(...reducers) {
   }
 }
 
-const reducer = with_logger(chain(transitions, game));
+const reducer = with_logger(chain(navigation_reducer, game_reducer));
 const { attach, connect, dispatch } =
   create_store(reducer);
 
