@@ -9,7 +9,7 @@ function ScoreScreen({results, index, target}) {
       src="${target.snapshot}">
     <div class="ui action"
       onclick="dispatch('PLAY_AGAIN')">
-      <div>${score}%</div>
+      <div>${score}/100</div>
     </div>
   `;
 }

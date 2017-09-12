@@ -7,7 +7,7 @@ function LevelScore(score, idx) {
      <div class="box action"
        onclick="dispatch('PLAY_LEVEL', ${idx})"
        style="padding: .5rem">
-       ${percent}%</div>
+       ${percent}</div>
   `;
 }
 
