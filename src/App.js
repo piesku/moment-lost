@@ -1,4 +1,3 @@
-import html from "innerself";
 import { connect } from "./store";
 
 import TitleScreen from "./TitleScreen";

@@ -5,6 +5,7 @@ function LevelScore(num) {
   const percent = Math.floor(num * 100);
   return html`
      <div class="box"
+       onclick="dispatch('PLAY_LEVEL')"
        style="padding: .5rem">
        ${percent}%</div>
   `;
