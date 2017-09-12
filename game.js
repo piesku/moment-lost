@@ -420,7 +420,12 @@ function scale(out, a, b) {
  * @param {vec3} b the second operand
  * @returns {Number} distance between a and b
  */
-
+function distance(a, b) {
+  let x = b[0] - a[0];
+  let y = b[1] - a[1];
+  let z = b[2] - a[2];
+  return Math.sqrt(x*x + y*y + z*z);
+}
 
 /**
  * Calculates the squared euclidian distance between two vec3's
@@ -517,7 +522,15 @@ function cross(out, a, b) {
  * @param {Number} t interpolation amount between the two inputs
  * @returns {vec3} out
  */
-
+function lerp(out, a, b, t) {
+  let ax = a[0];
+  let ay = a[1];
+  let az = a[2];
+  out[0] = ax + t * (b[0] - ax);
+  out[1] = ay + t * (b[1] - ay);
+  out[2] = az + t * (b[2] - az);
+  return out;
+}
 
 /**
  * Performs a hermite interpolation with two control points
@@ -3509,6 +3522,47 @@ class Game {
   }
 }
 
+class Tween {
+  constructor(options) {
+    this.to = options.to;
+    this.time = options.time || 1000;
+    this.game = options.game;
+    this.object = options.object;
+    this.property = options.property;
+  }
+
+  do_step(tick, resolve) {
+    this.current_step = Math.min(
+      1,
+      ((tick - this.first_tick) / this.tick_delta) * this.step
+    );
+    this.action();
+    if (this.current_step === 1) {
+      this.game.off('tick', this.do_step.bound);
+      resolve();
+    }
+  }
+
+  action() {}
+
+  pre_start() {
+    this.tick_delta = this.game.tick_delta;
+    this.first_tick = this.game.last_tick;
+    this.number_of_ticks = Math.ceil(this.time / this.tick_delta);
+    this.step = 1 / this.number_of_ticks;
+  }
+
+  start() {
+    this.pre_start();
+    return new Promise((resolve) => {
+      this.do_step.bound = (tick) => {
+        this.do_step(tick, resolve);
+      };
+      this.game.on('tick', this.do_step.bound);
+    });
+  }
+}
+
 class Material {
   constructor() {
     this.uniforms = {};
@@ -3948,15 +4002,18 @@ class PhongMaterial extends Material {
 
 const phong = new PhongMaterial();
 
-const SEED = 19870603;
+const base_seed = 3061987;
 
-const rand = (function() {
-  let seed = SEED;
-  return function() {
-    seed = seed * 16807 % 2147483647;
-    return (seed -1) / 2147483646;
-  }
-})();
+let seed = base_seed;
+
+function set_seed(new_seed) {
+  seed = new_seed;
+}
+
+const rand = function() {
+  seed = seed * 16807 % 2147483647;
+  return (seed - 1) / 2147483646;
+};
 
 function integer(min = 0, max = 1) {
   return Math.floor(rand() * (max - min + 1) + min);
@@ -3996,13 +4053,13 @@ function look_at_target(matrix) {
   return transformMat4(target, target, matrix);
 }
 
-const element = (i, color) => {
+const element = (i, color, type) => {
   let elements = [];
   const sign_x = Math.cos(i * Math.PI);
   const sign_z = Math.cos(i * Math.PI);
   const x = 75 + 100 * Math.sin(i * Math.PI / 6);
 
-  switch (integer(0, 2)) {
+  switch (type) {
     case 0:
     case 1:
       // building
@@ -4051,6 +4108,17 @@ const element = (i, color) => {
         color,
       });
       elements.push(crown);
+      break;
+    case 3:
+      const spawner = new Box();
+      spawner.get_component(Render).set({
+        color: '#000000',
+        material: basic
+      });
+      spawner.get_component(Transform).set({
+        position: [0, 1, 0]
+      });
+      elements.push(spawner);
       break;
   }
 
@@ -4118,7 +4186,6 @@ function get_hint(target, camera, world_size) {
 
 function get_score(target, camera, world_size) {
   const transform = camera.get_component(Transform);
-  const dummy = camera.get_component(DummyLookAt);
 
   const p = position_score(target.position, transform.position, world_size);
   const r = rotation_score(target.rotation, transform.rotation);
@@ -4235,6 +4302,157 @@ function play_footstep(freq = 50) {
   oscillator.stop(end_time);
 }
 
+function fm_synth(audio_context, carrier, modulator, mod_gain) {
+  this.modulator_gain = audio_context.createGain();
+  this.modulator_gain.gain.value = mod_gain || 300;
+
+  modulator.connect(this.modulator_gain);
+  this.modulator_gain.connect(carrier.frequency);
+
+  this.connect = audio_node => {
+    carrier.disconnect();
+    carrier.connect(audio_node);
+  };
+
+  this.disconnect = audio_node => {
+    carrier.disconnect(audio_node);
+  };
+}
+
+function am_synth(audio_context, node1, node2) {
+
+  var am_gain = audio_context.createGain();
+  am_gain.gain.value = 1;
+
+  node1.connect(am_gain);
+  node2.connect(am_gain.gain);
+
+  this.connect = function(audio_node){
+    am_gain.disconnect();
+    am_gain.connect(audio_node);
+  };
+}
+
+function param_ead(audio_context, param, attack_time, decay_time, min, max) {
+
+  /* 0.001 - 60dB Drop
+  e(-n) = 0.001; - Decay Rate of setTargetAtTime.
+  n = 6.90776;
+  */
+  var t60multiplier = 6.90776;
+
+  this.attack_time = attack_time || 0.9;
+  this.decay_time = decay_time || 0.9;
+
+  this.min = min || 0;
+  this.max = max || 1;
+
+  this.trigger = time => {
+    var start_time = time || audio_context.currentTime;
+    param.cancelScheduledValues(start_time);
+    param.setValueAtTime(this.min, start_time);
+    param.setTargetAtTime(this.max, start_time, this.attack_time/t60multiplier);
+    param.setTargetAtTime(this.min, start_time + this.attack_time+(1.0/44100.0), this.decay_time/t60multiplier);
+  };
+}
+
+const bird_sound_params = {
+  "ifrq": 0.0204082,
+  "atk": 0.367347,
+  "dcy": 0.183673,
+  "fmod1": 0.0612245,
+  "atkf1": 0,
+  "dcyf1": 1,
+  "fmod2": 0.285714,
+  "atkf2": 0.22449,
+  "dcyf2": 0.489796,
+  "amod1": 0.367347,
+  "atka1": 0.387755,
+  "dcya1": 0.734694,
+  "amod2": 0.204082,
+  "atka2": 0.428571,
+  "dcya2": 0.142857
+};
+
+function bird_sound(position, time) {
+  const freq_multiplier = 7000;
+  const freq_offset = 300;
+  const max_attack_decay_time = 0.9; //seconds
+  const env_freq_multiplier = 3000;
+
+  const panner = context.createPanner();
+  panner.panningModel = "equalpower";
+  panner.distanceModel = "exponential";
+  panner.refDistance = 0.3;
+  panner.setPosition(...position);
+
+  const carrier_osc = context.createOscillator();
+  const mod_osc = context.createOscillator();
+  const am_osc = context.createOscillator();
+
+  const mod_osc_gain = context.createGain();
+  const am_osc_gain = context.createGain();
+
+  const main_gain = context.createGain();
+
+  mod_osc.connect(mod_osc_gain);
+  am_osc.connect(am_osc_gain);
+
+  const fm = new fm_synth(context, carrier_osc, mod_osc_gain);
+  const am = new am_synth(context, fm, am_osc_gain);
+
+  const main_env = new param_ead(context, main_gain.gain);
+  const fm_freq_env = new param_ead(context, mod_osc.frequency);
+  const am_freq_env = new param_ead(context, am_osc.frequency);
+  const fm_gain_env = new param_ead(context,  mod_osc_gain.gain);
+  const am_gain_env = new param_ead(context, am_osc_gain.gain);
+
+  am.connect(main_gain);
+  main_gain.connect(panner);
+  panner.connect(context.destination);
+
+  fm.modulator_gain.gain.value = freq_offset + freq_multiplier * bird_sound_params.ifrq;
+  carrier_osc.frequency.value = freq_offset + freq_multiplier * bird_sound_params.ifrq;
+
+  main_env.attack_time = max_attack_decay_time * bird_sound_params.atk;
+  main_env.decay_time = max_attack_decay_time * bird_sound_params.dcy;
+
+  fm_freq_env.max = env_freq_multiplier * bird_sound_params.fmod1;
+  fm_freq_env.attack_time = max_attack_decay_time * bird_sound_params.atkf1;
+  fm_freq_env.decay_time = max_attack_decay_time * bird_sound_params.dcyf1;
+
+  am_freq_env.max = env_freq_multiplier * bird_sound_params.fmod2;
+  am_freq_env.attack_time = max_attack_decay_time * bird_sound_params.atkf2;
+  am_freq_env.decay_time = max_attack_decay_time * bird_sound_params.dcyf2;
+
+  fm_gain_env.max = bird_sound_params.amod1;
+  fm_gain_env.attack_time = max_attack_decay_time * bird_sound_params.atka1;
+  fm_gain_env.decay_time = max_attack_decay_time * bird_sound_params.dcya1;
+
+  am_gain_env.max = -bird_sound_params.amod2;
+  am_gain_env.attack_time = max_attack_decay_time * bird_sound_params.atka2;
+  am_gain_env.decay_time = max_attack_decay_time * bird_sound_params.dcya2;
+
+  main_gain.gain.value = 0;
+  carrier_osc.start(0);
+  mod_osc.start(0);
+  am_osc.start(0);
+
+  main_env.trigger(time);
+  fm_freq_env.trigger(time);
+  am_freq_env.trigger(time);
+  fm_gain_env.trigger(time);
+  am_gain_env.trigger(time);
+}
+
+function play_bird_sound(position) {
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      bird_sound(position, context.currentTime + Math.random()*0.4);
+    }, bird_sound_params.atk * 1000 * 1.2 * i);
+  }
+}
+
 class Footsteps extends Component {
   mount() {
     this.transform = this.entity.get_component(Transform);
@@ -4255,19 +4473,90 @@ class Footsteps extends Component {
   }
 }
 
+const bird_model = [{
+  "vertices": [0, 1, 0.0432336, 0, 2.66717, -0.0897549, -0.311383, 2.19602, 0.234146, -0.63757, 1.36243, 0.125756, -2.39534, 2.44478, -0.378434, -1.73172, -1.46682, -0.378434, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, 0.108391, 0, -1.67049, -0.39161, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.234146, -2.39534, 2.44478, -0.126923, -3.45125, 2.35058, -3.40775, -1.73172, -1.46682, -0.126923, -3.10363, 0.637105, -3.60768, 0, 1, 0.40839, 0, -1.67049, 0.464128, 0, -2.87961, 0.359902, 0, 2.16981, 0.60839, 0, 1, 0.0432336, 0, 2.66717, -0.0897549, 0.311383, 2.19602, 0.234146, 0.63757, 1.36243, 0.125756, 2.39534, 2.44478, -0.378434, 1.73172, -1.46682, -0.378434, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, 0.108391, 0, -1.67049, -0.39161, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.234146, 2.39534, 2.44478, -0.126923, 3.45125, 2.35058, -3.40775, 1.73172, -1.46682, -0.126923, 3.10363, 0.637105, -3.60768, 0, 1, 0.40839, 0, -1.67049, 0.464128, 0, -2.87961, 0.359902, 0, 2.16981, 0.60839],
+  "indices": [2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 19, 1, 2, 19, 1, 2, 2, 16, 19, 2, 16, 19, 2, 3, 16, 2, 3, 16, 16, 3, 6, 16, 6, 17, 16, 3, 6, 16, 6, 17, 7, 18, 17, 7, 17, 6, 7, 18, 17, 7, 17, 6, 10, 11, 18, 10, 18, 7, 10, 11, 18, 10, 18, 7, 8, 11, 10, 8, 10, 7, 8, 11, 10, 8, 10, 7, 9, 8, 7, 9, 8, 7, 9, 7, 6, 9, 7, 6, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 4, 12, 3, 4, 12, 3, 5, 13, 4, 13, 12, 4, 5, 13, 4, 13, 12, 4, 15, 14, 12, 15, 12, 13, 15, 14, 12, 15, 12, 13, 14, 15, 5, 14, 15, 5, 5, 15, 13, 5, 15, 13, 20, 21, 22, 29, 20, 23, 23, 20, 22, 20, 21, 22, 29, 20, 23, 23, 20, 22, 22, 21, 39, 22, 21, 39, 36, 23, 22, 39, 36, 22, 36, 23, 22, 39, 36, 22, 37, 23, 36, 37, 23, 36, 26, 37, 38, 37, 26, 23, 26, 37, 38, 37, 26, 23, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 27, 38, 30, 27, 30, 28, 27, 38, 30, 27, 30, 28, 38, 31, 30, 38, 31, 30, 30, 31, 28, 30, 31, 28, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 24, 33, 35, 24, 32, 33, 24, 33, 35, 24, 32, 33, 23, 32, 24, 23, 32, 24, 23, 24, 25, 23, 24, 25, 24, 35, 25, 24, 35, 25]
+}, {
+  "vertices": [0, 1, -0.0651568, 0, 2.66717, -0.198145, -0.311383, 2.19602, 0.125756, -0.63757, 1.36243, 0.125756, -2.73117, 2.7172, 0.268059, -1.87832, -1.46682, 0.268059, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, 1.19209e-7, 0, -1.67049, -0.5, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.125755, -2.73117, 2.7172, 0.51957, -6.61669, 2.97823, -0.513461, -1.87832, -1.46682, 0.51957, -6.56954, 1.24407, -0.513461, 0, 1, 0.3, 0, -1.67049, 0.355737, 0, -2.87961, 0.251511, 0, 2.16981, 0.5, 0, 1, -0.0651568, 0, 2.66717, -0.198145, 0.311383, 2.19602, 0.125756, 0.63757, 1.36243, 0.125756, 2.73117, 2.7172, 0.268059, 1.87832, -1.46682, 0.268059, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, 1.19209e-7, 0, -1.67049, -0.5, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.125755, 2.73117, 2.7172, 0.51957, 6.61669, 2.97823, -0.513461, 1.87832, -1.46682, 0.51957, 6.56954, 1.24407, -0.513461, 0, 1, 0.3, 0, -1.67049, 0.355737, 0, -2.87961, 0.251511, 0, 2.16981, 0.5],
+  "indices": [2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 19, 1, 2, 19, 1, 2, 2, 16, 19, 2, 16, 19, 2, 3, 16, 2, 3, 16, 16, 3, 6, 16, 6, 17, 16, 3, 6, 16, 6, 17, 7, 18, 17, 7, 17, 6, 7, 18, 17, 7, 17, 6, 10, 11, 18, 10, 18, 7, 10, 11, 18, 10, 18, 7, 8, 11, 10, 8, 10, 7, 8, 11, 10, 8, 10, 7, 9, 8, 7, 9, 8, 7, 9, 7, 6, 9, 7, 6, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 4, 12, 3, 4, 12, 3, 5, 13, 4, 13, 12, 4, 5, 13, 4, 13, 12, 4, 15, 14, 12, 15, 12, 13, 15, 14, 12, 15, 12, 13, 14, 15, 5, 14, 15, 5, 5, 15, 13, 5, 15, 13, 20, 21, 22, 29, 20, 23, 23, 20, 22, 20, 21, 22, 29, 20, 23, 23, 20, 22, 22, 21, 39, 22, 21, 39, 36, 23, 22, 39, 36, 22, 36, 23, 22, 39, 36, 22, 37, 23, 36, 37, 23, 36, 26, 37, 38, 37, 26, 23, 26, 37, 38, 37, 26, 23, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 27, 38, 30, 27, 30, 28, 27, 38, 30, 27, 30, 28, 38, 31, 30, 38, 31, 30, 30, 31, 28, 30, 31, 28, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 24, 33, 35, 24, 32, 33, 24, 33, 35, 24, 32, 33, 23, 32, 24, 23, 32, 24, 23, 24, 25, 23, 24, 25, 24, 35, 25, 24, 35, 25]
+}, {
+  "vertices": [0, 1, -0.18593, 0, 2.66717, -0.318919, -0.311383, 2.19602, 0.00498234, -0.63757, 1.36243, 0.125756, -2.13574, 2.71753, 0.924384, -1.27253, -1.44252, 0.497551, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, -0.120773, 0, -1.67049, -0.620773, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.00498211, -2.13066, 2.69291, 1.17464, -5.74559, 1.12196, 4.29641, -1.26745, -1.46715, 0.747802, -5.69843, -0.612202, 4.29641, 0, 1, 0.179227, 0, -1.67049, 0.234964, 0, -2.87961, 0.130738, 0, 2.16981, 0.379227, 0, 1, -0.18593, 0, 2.66717, -0.318919, 0.311383, 2.19602, 0.00498234, 0.63757, 1.36243, 0.125756, 2.13574, 2.71753, 0.924384, 1.27253, -1.44252, 0.497551, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, -0.120773, 0, -1.67049, -0.620773, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.00498211, 2.13066, 2.69291, 1.17464, 5.74559, 1.12196, 4.29641, 1.26745, -1.46715, 0.747802, 5.69843, -0.612202, 4.29641, 0, 1, 0.179227, 0, -1.67049, 0.234964, 0, -2.87961, 0.130738, 0, 2.16981, 0.379227],
+  "indices": [2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 19, 1, 2, 19, 1, 2, 2, 16, 19, 2, 16, 19, 2, 3, 16, 2, 3, 16, 16, 3, 6, 16, 6, 17, 16, 3, 6, 16, 6, 17, 7, 18, 17, 7, 17, 6, 7, 18, 17, 7, 17, 6, 10, 11, 18, 10, 18, 7, 10, 11, 18, 10, 18, 7, 8, 11, 10, 8, 10, 7, 8, 11, 10, 8, 10, 7, 9, 8, 7, 9, 8, 7, 9, 7, 6, 9, 7, 6, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 4, 12, 3, 4, 12, 3, 5, 13, 4, 13, 12, 4, 5, 13, 4, 13, 12, 4, 15, 14, 12, 15, 12, 13, 15, 14, 12, 15, 12, 13, 14, 15, 5, 14, 15, 5, 5, 15, 13, 5, 15, 13, 20, 21, 22, 29, 20, 23, 23, 20, 22, 20, 21, 22, 29, 20, 23, 23, 20, 22, 22, 21, 39, 22, 21, 39, 36, 23, 22, 39, 36, 22, 36, 23, 22, 39, 36, 22, 37, 23, 36, 37, 23, 36, 26, 37, 38, 37, 26, 23, 26, 37, 38, 37, 26, 23, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 27, 38, 30, 27, 30, 28, 27, 38, 30, 27, 30, 28, 38, 31, 30, 38, 31, 30, 30, 31, 28, 30, 31, 28, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 24, 33, 35, 24, 32, 33, 24, 33, 35, 24, 32, 33, 23, 32, 24, 23, 32, 24, 23, 24, 25, 23, 24, 25, 24, 35, 25, 24, 35, 25]
+}];
+
+class VecTween extends Tween {
+  action() {
+    const _from = [];
+    lerp(_from, this.from, this.to, this.current_step);
+    this.object[this.property] = _from;
+  }
+
+  pre_start() {
+    super.pre_start();
+    this.from = this.object[this.property].slice();
+  }
+}
+
+const tween_time = 4; // <- seconds
+function spawn_birds(position$$1, color, radius, qty, game) {
+  play_bird_sound(position$$1);
+  for (let i = 0; i < qty; i++) {
+    setTimeout(() => {
+      const target_position = position([position$$1[0], position$$1[2]], radius, 100);
+      const bird = new Entity({
+        components: [
+          new Transform({
+            position: position$$1,
+            scale: [0.2, 0.2, 0.2]
+          }),
+          new Render({
+            material: basic,
+            color
+          }),
+          new Morph({
+            frame_time: 16
+          })
+        ]
+      });
+
+      bird.get_component(Morph).frames = bird_model;
+      bird.get_component(Transform).look_at(target_position);
+      bird.get_component(Transform).rotate_ud(Math.PI/2);
+      bird.get_component(Morph).create_buffers();
+      game.add(bird);
+
+      new VecTween({
+        object: bird.get_component(Transform),
+        property: 'position',
+        to: target_position,
+        time: tween_time * 1000,
+        game: game
+      }).start().then(() => {
+        game.remove(bird);
+      });
+    }, i*15);
+  }
+}
+
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
+const BIRD_TRIGGER_DISTANCE = 20;
+const BIRD_FLOCK_SIZE = 25;
 
-const props = [];
+let props = [];
+let birds_positions = [];
 
 function hex(hue, lum) {
   const rgb = hsl_to_rgb(hue, SATURATION, lum);
   return rgb_to_hex(rgb);
 }
 
-function create_level(lvl_number, hue) {
+function create_level(lvl_number) {
+  set_seed(base_seed * lvl_number);
+  props = [];
+  birds_positions = [];
   const game = new Game({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -4282,19 +4571,20 @@ function create_level(lvl_number, hue) {
     rotate_speed: .5,
   }));
 
+  const hue = float(0, 1);
   const color = hex(hue, LUMINANCE);
 
-  const floor = new Plane();
-  floor.get_component(Transform).scale = [WORLD_SIZE, 1, WORLD_SIZE];
-  floor.get_component(Render).set({
+  const floor$$1 = new Plane();
+  floor$$1.get_component(Transform).scale = [WORLD_SIZE, 1, WORLD_SIZE];
+  floor$$1.get_component(Render).set({
     material: basic,
     color
   });
 
-  game.add(floor);
+  game.add(floor$$1);
 
   for (let i = 0; i < Math.pow(lvl_number, 2) + 1; i++) {
-    element(i, color).forEach((el) => {
+    element(i, color, integer(0, 2)).forEach((el) => {
       props.push(el);
       game.add(el);
     });
@@ -4308,6 +4598,20 @@ function create_level(lvl_number, hue) {
     look_at_target(game.camera.get_component(Transform).matrix)
   );
 
+  const spawners = integer(2, 4);
+  for (let i = 0; i < spawners; i++) {
+    const birds_position = position([0, 0], WORLD_SIZE/3, 0);
+    birds_positions.push(birds_position);
+
+    // XXX: Uncomment here to see birds' spawning points
+
+    // const bird_spawner = element(1, color, 3)[0];
+    // bird_spawner.get_component(Transform).set({
+    //   position: birds_position
+    // });
+    // game.add(bird_spawner);
+  }
+
 
   game.on("afterrender", function take_snapshot() {
     game.off("afterrender", take_snapshot);
@@ -4320,7 +4624,7 @@ function create_level(lvl_number, hue) {
     game.stop();
   });
 
-  return game;
+  return [game, hue];
 }
 
 function start_level(game, hue, target) {
@@ -4339,6 +4643,22 @@ function start_level(game, hue, target) {
   }
 
   game.start();
+
+  game.on("tick", () => {
+    for (let i = 0; i < birds_positions.length; i++) {
+      if (distance(birds_positions[i], game.camera.get_component(Transform).position) < BIRD_TRIGGER_DISTANCE) {
+        spawn_birds(
+          birds_positions[i],
+          hex(hue, LUMINANCE * get_hint(target, game.camera, WORLD_SIZE)),
+          WORLD_SIZE/5,
+          BIRD_FLOCK_SIZE,
+          game
+        );
+        birds_positions.splice(i, 1);
+        break;
+      }
+    }
+  });
 
   game.on("afterrender", function hint() {
     const hint = get_hint(target, game.camera, WORLD_SIZE);
@@ -4374,14 +4694,13 @@ function reducer(state = init, action, args) {
         scene: "SCENE_TITLE",
       });
     }
-    case "PLAY_NOW":
     case "PLAY_LEVEL": {
-      const hue = float(0, 1);
-      const { results } = state;
-      const level = create_level(results.length + 1, hue);
+      const [index] = args;
+      const [level, hue] = create_level(index + 1);
       return merge(state, {
         scene: "SCENE_FIND",
         level,
+        index,
         hue
       });
     }
@@ -4398,11 +4717,15 @@ function reducer(state = init, action, args) {
       });
     }
     case "VALIDATE_SNAPSHOT": {
-      const { level, target, results } = state;
+      const { level, index, target, results } = state;
       const score = end_level(level, target);
       return merge(state, {
         scene: "SCENE_SCORE",
-        results: [...results, score]
+        results: [
+            ...results.slice(0, index),
+            score,
+            ...results.slice(index + 1)
+        ]
       });
     }
     case "PLAY_AGAIN":
@@ -4424,18 +4747,19 @@ window.dispatch = dispatch;
 function TitleScreen() {
   return html`
     <div class="ui action"
-      onclick="dispatch('PLAY_NOW')">
+      onclick="dispatch('PLAY_LEVEL', 0)">
       <div>A moment lost in time.</div>
     </div>
   `;
 }
 
-function LevelScore(num) {
-  const percent = Math.floor(num * 100);
+function LevelScore(score, idx) {
+  const percent = Math.floor(score * 100);
   return html`
-     <div class="box"
+     <div class="box action"
+       onclick="dispatch('PLAY_LEVEL', ${idx})"
        style="padding: .5rem">
-       ${percent}%</div>
+       ${percent}</div>
   `;
 }
 
@@ -4450,8 +4774,8 @@ function LevelSelect({results}) {
         max-height: 720px">
       ${results.map(LevelScore)}
       <div class="action"
-        style="padding: .5rem"
-        onclick="dispatch('PLAY_LEVEL')">next</div>
+        style="padding: .5rem; color: #999;"
+        onclick="dispatch('PLAY_LEVEL', ${results.length})">next</div>
       </div>
     </div>
   `;
@@ -4468,15 +4792,15 @@ function FindScreen() {
   `;
 }
 
-function ScoreScreen({results, target}) {
-  const score = Math.floor(results[results.length - 1] * 100);
+function ScoreScreen({results, index, target}) {
+  const score = Math.floor(results[index] * 100);
   return html`
     <img class="ui"
       style="opacity: .5"
       src="${target.snapshot}">
     <div class="ui action"
       onclick="dispatch('PLAY_AGAIN')">
-      <div>${score}%</div>
+      <div>${score}/100</div>
     </div>
   `;
 }
