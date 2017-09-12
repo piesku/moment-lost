@@ -27,6 +27,7 @@ function hex(hue, lum) {
 }
 
 export function create_level(lvl_number, hue) {
+  random.set_seed(random.base_seed * lvl_number);
   props = [];
   birds_positions = [];
   const game = new Game({
@@ -69,7 +70,7 @@ export function create_level(lvl_number, hue) {
     random.look_at_target(game.camera.get_component(Transform).matrix)
   );
 
-  const spawners = random.integer(2, 4);
+  const spawners = random.integer(4, 14);
   for (let i = 0; i < spawners; i++) {
     const birds_position = random.position([0, 0], WORLD_SIZE/3);
     birds_positions.push(birds_position);

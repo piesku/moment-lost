@@ -1,13 +1,16 @@
 import { vec3 } from "cervus/math";
-const SEED = 19870603;
+export const base_seed = 3061987;
 
-const rand = (function() {
-  let seed = SEED;
-  return function() {
-    seed = seed * 16807 % 2147483647;
-    return (seed -1) / 2147483646;
-  }
-})();
+let seed = base_seed;
+
+export function set_seed(new_seed) {
+  seed = new_seed;
+}
+
+const rand = function() {
+  seed = seed * 16807 % 2147483647;
+  return (seed - 1) / 2147483646;
+};
 
 export function integer(min = 0, max = 1) {
   return Math.floor(rand() * (max - min + 1) + min);

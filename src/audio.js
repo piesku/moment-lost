@@ -196,7 +196,7 @@ function bird_sound(position, time) {
   const mod_osc_gain = context.createGain();
   const am_osc_gain = context.createGain();
 
-  const mainGain = context.createGain();
+  const main_gain = context.createGain();
 
   mod_osc.connect(mod_osc_gain);
   am_osc.connect(am_osc_gain);
@@ -204,14 +204,14 @@ function bird_sound(position, time) {
   const fm = new fm_synth(context, carrier_osc, mod_osc_gain);
   const am = new am_synth(context, fm, am_osc_gain);
 
-  const main_env = new param_ead(context, mainGain.gain);
+  const main_env = new param_ead(context, main_gain.gain);
   const fm_freq_env = new param_ead(context, mod_osc.frequency);
   const am_freq_env = new param_ead(context, am_osc.frequency);
   const fm_gain_env = new param_ead(context,  mod_osc_gain.gain);
   const am_gain_env = new param_ead(context, am_osc_gain.gain);
 
-  am.connect(mainGain);
-  mainGain.connect(panner);
+  am.connect(main_gain);
+  main_gain.connect(panner);
   panner.connect(context.destination);
 
   fm.modulator_gain.gain.value = freq_offset + freq_multiplier * bird_sound_params.ifrq;
@@ -236,7 +236,7 @@ function bird_sound(position, time) {
   am_gain_env.attack_time = max_attack_decay_time * bird_sound_params.atka2;
   am_gain_env.decay_time = max_attack_decay_time * bird_sound_params.dcya2;
 
-  mainGain.gain.value = 0;
+  main_gain.gain.value = 0;
   carrier_osc.start(0);
   mod_osc.start(0);
   am_osc.start(0);
