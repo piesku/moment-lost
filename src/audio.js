@@ -104,3 +104,154 @@ export function play_footstep(freq = 50) {
   base.stop(end_time);
   oscillator.stop(end_time);
 }
+
+function fm_synth(audio_context, carrier, modulator, mod_gain) {
+  this.modulator_gain = audio_context.createGain();
+  this.modulator_gain.gain.value = mod_gain || 300;
+
+  modulator.connect(this.modulator_gain);
+  this.modulator_gain.connect(carrier.frequency);
+
+  this.connect = audio_node => {
+    carrier.disconnect();
+    carrier.connect(audio_node);
+  };
+
+  this.disconnect = audio_node => {
+    carrier.disconnect(audio_node);
+  };
+}
+
+function am_synth(audio_context, node1, node2) {
+
+  var am_gain = audio_context.createGain();
+  am_gain.gain.value = 1;
+
+  node1.connect(am_gain);
+  node2.connect(am_gain.gain);
+
+  this.connect = function(audio_node){
+    am_gain.disconnect();
+    am_gain.connect(audio_node);
+  };
+}
+
+function param_ead(audio_context, param, attack_time, decay_time, min, max) {
+
+  /* 0.001 - 60dB Drop
+  e(-n) = 0.001; - Decay Rate of setTargetAtTime.
+  n = 6.90776;
+  */
+  var t60multiplier = 6.90776;
+
+  this.attack_time = attack_time || 0.9;
+  this.decay_time = decay_time || 0.9;
+
+  this.min = min || 0;
+  this.max = max || 1;
+
+  this.trigger = time => {
+    var start_time = time || audio_context.currentTime;
+    param.cancelScheduledValues(start_time);
+    param.setValueAtTime(this.min, start_time);
+    param.setTargetAtTime(this.max, start_time, this.attack_time/t60multiplier);
+    param.setTargetAtTime(this.min, start_time + this.attack_time+(1.0/44100.0), this.decay_time/t60multiplier);
+  };
+}
+
+const bird_sound_params = {
+  "ifrq": 0.0204082,
+  "atk": 0.367347,
+  "dcy": 0.183673,
+  "fmod1": 0.0612245,
+  "atkf1": 0,
+  "dcyf1": 1,
+  "fmod2": 0.285714,
+  "atkf2": 0.22449,
+  "dcyf2": 0.489796,
+  "amod1": 0.367347,
+  "atka1": 0.387755,
+  "dcya1": 0.734694,
+  "amod2": 0.204082,
+  "atka2": 0.428571,
+  "dcya2": 0.142857
+};
+
+function bird_sound(position, time) {
+  const freq_multiplier = 7000;
+  const freq_offset = 300;
+  const max_attack_decay_time = 0.9; //seconds
+  const env_freq_multiplier = 3000;
+
+  const panner = context.createPanner();
+  panner.panningModel = "equalpower";
+  panner.distanceModel = "exponential";
+  panner.refDistance = 0.3;
+  panner.setPosition(...position);
+
+  const carrier_osc = context.createOscillator();
+  const mod_osc = context.createOscillator();
+  const am_osc = context.createOscillator();
+
+  const mod_osc_gain = context.createGain();
+  const am_osc_gain = context.createGain();
+
+  const mainGain = context.createGain();
+
+  mod_osc.connect(mod_osc_gain);
+  am_osc.connect(am_osc_gain);
+
+  const fm = new fm_synth(context, carrier_osc, mod_osc_gain);
+  const am = new am_synth(context, fm, am_osc_gain);
+
+  const main_env = new param_ead(context, mainGain.gain);
+  const fm_freq_env = new param_ead(context, mod_osc.frequency);
+  const am_freq_env = new param_ead(context, am_osc.frequency);
+  const fm_gain_env = new param_ead(context,  mod_osc_gain.gain);
+  const am_gain_env = new param_ead(context, am_osc_gain.gain);
+
+  am.connect(mainGain);
+  mainGain.connect(panner);
+  panner.connect(context.destination);
+
+  fm.modulator_gain.gain.value = freq_offset + freq_multiplier * bird_sound_params.ifrq;
+  carrier_osc.frequency.value = freq_offset + freq_multiplier * bird_sound_params.ifrq;
+
+  main_env.attack_time = max_attack_decay_time * bird_sound_params.atk;
+  main_env.decay_time = max_attack_decay_time * bird_sound_params.dcy;
+
+  fm_freq_env.max = env_freq_multiplier * bird_sound_params.fmod1;
+  fm_freq_env.attack_time = max_attack_decay_time * bird_sound_params.atkf1;
+  fm_freq_env.decay_time = max_attack_decay_time * bird_sound_params.dcyf1;
+
+  am_freq_env.max = env_freq_multiplier * bird_sound_params.fmod2;
+  am_freq_env.attack_time = max_attack_decay_time * bird_sound_params.atkf2;
+  am_freq_env.decay_time = max_attack_decay_time * bird_sound_params.dcyf2;
+
+  fm_gain_env.max = bird_sound_params.amod1;
+  fm_gain_env.attack_time = max_attack_decay_time * bird_sound_params.atka1;
+  fm_gain_env.decay_time = max_attack_decay_time * bird_sound_params.dcya1;
+
+  am_gain_env.max = -bird_sound_params.amod2;
+  am_gain_env.attack_time = max_attack_decay_time * bird_sound_params.atka2;
+  am_gain_env.decay_time = max_attack_decay_time * bird_sound_params.dcya2;
+
+  mainGain.gain.value = 0;
+  carrier_osc.start(0);
+  mod_osc.start(0);
+  am_osc.start(0);
+
+  main_env.trigger(time);
+  fm_freq_env.trigger(time);
+  am_freq_env.trigger(time);
+  fm_gain_env.trigger(time);
+  am_gain_env.trigger(time);
+}
+
+export function play_bird_sound(position) {
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      bird_sound(position, context.currentTime + Math.random()*0.4);
+    }, bird_sound_params.atk * 1000 * 1.2 * i);
+  }
+}

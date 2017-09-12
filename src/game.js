@@ -19,7 +19,7 @@ const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
 
 let props = [];
-let spawners_positions = [];
+let birds_positions = [];
 
 function hex(hue, lum) {
   const rgb = hsl_to_rgb(hue, SATURATION, lum);
@@ -28,7 +28,7 @@ function hex(hue, lum) {
 
 export function create_level(lvl_number, hue) {
   props = [];
-  spawners_positions = [];
+  birds_positions = [];
   const game = new Game({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -71,14 +71,14 @@ export function create_level(lvl_number, hue) {
 
   const spawners = random.integer(2, 4);
   for (let i = 0; i < spawners; i++) {
-    const spawner_position = random.position([0, 0], WORLD_SIZE/3);
-    spawners_positions.push(spawner_position);
+    const birds_position = random.position([0, 0], WORLD_SIZE/3);
+    birds_positions.push(birds_position);
 
     // XXX: Uncomment here to see birds' spawning points
 
     // const bird_spawner = element(1, color, 3)[0];
     // bird_spawner.get_component(Transform).set({
-    //   position: spawner_position
+    //   position: birds_position
     // });
     // game.add(bird_spawner);
   }
@@ -116,10 +116,16 @@ export function start_level(game, hue, target) {
   game.start();
 
   game.on("tick", () => {
-    for (let i = 0; i < spawners_positions.length; i++) {
-      if (distance(spawners_positions[i], game.camera.get_component(Transform).position) < 15) {
-        spawn_birds(spawners_positions[i], WORLD_SIZE/5, 25, game);
-        spawners_positions.splice(i, 1);
+    for (let i = 0; i < birds_positions.length; i++) {
+      if (distance(birds_positions[i], game.camera.get_component(Transform).position) < 15) {
+        spawn_birds(
+          birds_positions[i],
+          hex(hue, LUMINANCE * get_hint(target, game.camera, WORLD_SIZE)),
+          WORLD_SIZE/5,
+          25,
+          game
+        );
+        birds_positions.splice(i, 1);
         break;
       }
     }

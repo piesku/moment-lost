@@ -4,8 +4,11 @@ import { Entity } from "cervus/core";
 import { basic } from "cervus/materials";
 import * as random from "./random";
 import { VecTween } from "cervus/tweens";
+import { play_bird_sound } from "./audio";
 
-export function spawn_birds(position, radius, qty, game) {
+const tween_time = 4; // <- seconds
+export function spawn_birds(position, color, radius, qty, game) {
+  play_bird_sound(position);
   for (let i = 0; i < qty; i++) {
     setTimeout(() => {
       const target_position = random.position([position[0], position[2]], radius, 100);
@@ -16,7 +19,8 @@ export function spawn_birds(position, radius, qty, game) {
             scale: [0.2, 0.2, 0.2]
           }),
           new Render({
-            material: basic
+            material: basic,
+            color
           }),
           new Morph({
             frame_time: 16
@@ -34,7 +38,7 @@ export function spawn_birds(position, radius, qty, game) {
         object: bird.get_component(Transform),
         property: 'position',
         to: target_position,
-        time: 4000,
+        time: tween_time * 1000,
         game: game
       }).start().then(() => {
         game.remove(bird);
