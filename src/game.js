@@ -17,7 +17,7 @@ const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
-const BIRD_TRIGGER_DISTANCE = 20;
+const BIRD_TRIGGER_DISTANCE = 25;
 const BIRD_FLOCK_SIZE = 25;
 
 let props = [];
@@ -29,7 +29,7 @@ function hex(hue, lum) {
 }
 
 export function create_level(lvl_number) {
-  random.set_seed(random.base_seed * lvl_number);
+  random.set_seed(Math.pow(random.base_seed / lvl_number, 2));
   props = [];
   birds_positions = [];
   const game = new Game({
@@ -75,15 +75,15 @@ export function create_level(lvl_number) {
 
   const spawners = random.integer(2, 4);
   for (let i = 0; i < spawners; i++) {
-    const birds_position = random.position([0, 0], WORLD_SIZE/3, 0);
+    const birds_position = random.position([0, 0], WORLD_SIZE/3, -3);
     birds_positions.push(birds_position);
 
     // XXX: Uncomment here to see birds' spawning points
-    // const bird_spawner = element(1, color, 3)[0];
-    // bird_spawner.get_component(Transform).set({
-    //   position: birds_position
-    // });
-    // game.add(bird_spawner);
+    const bird_spawner = element(1, color, 3)[0];
+    bird_spawner.get_component(Transform).set({
+      position: birds_position
+    });
+    game.add(bird_spawner);
   }
 
 
