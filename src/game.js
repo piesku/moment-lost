@@ -79,7 +79,6 @@ export function create_level(lvl_number) {
     birds_positions.push(birds_position);
 
     // XXX: Uncomment here to see birds' spawning points
-
     // const bird_spawner = element(1, color, 3)[0];
     // bird_spawner.get_component(Transform).set({
     //   position: birds_position

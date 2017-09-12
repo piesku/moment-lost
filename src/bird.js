@@ -1,4 +1,4 @@
-import { bird_model } from './bird-model';
+import { bird_model_vertices, bird_model_indices } from './bird-model';
 import { Transform, Render, Morph } from "cervus/components";
 import { Entity } from "cervus/core";
 import { basic } from "cervus/materials";
@@ -7,6 +7,10 @@ import { VecTween } from "cervus/tweens";
 import { play_bird_sound } from "./audio";
 
 const tween_time = 4; // <- seconds
+const bird_model = bird_model_vertices.map(v => ({
+  vertices: v,
+  indices: bird_model_indices
+}));
 export function spawn_birds(position, color, radius, qty, game) {
   play_bird_sound(position);
   for (let i = 0; i < qty; i++) {
