@@ -130,7 +130,7 @@ function am_synth(audio_context, node1, node2) {
   node1.connect(am_gain);
   node2.connect(am_gain.gain);
 
-  this.connect = function(audio_node){
+  this.connect = function(audio_node) {
     am_gain.disconnect();
     am_gain.connect(audio_node);
   };
@@ -148,7 +148,7 @@ function param_ead(audio_context, param, attack_time, decay_time, min, max) {
   this.decay_time = decay_time || 0.9;
 
   this.min = min || 0;
-  this.max = max || 1;
+  this.max = max || 50;
 
   this.trigger = time => {
     var start_time = time || audio_context.currentTime;
@@ -236,7 +236,7 @@ function bird_sound(position, time) {
   am_gain_env.attack_time = max_attack_decay_time * bird_sound_params.atka2;
   am_gain_env.decay_time = max_attack_decay_time * bird_sound_params.dcya2;
 
-  main_gain.gain.value = 0;
+  main_gain.gain.value = 10;
   carrier_osc.start(0);
   mod_osc.start(0);
   am_osc.start(0);
