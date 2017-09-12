@@ -20,5 +20,6 @@ const { attach, connect, dispatch } =
   create_store(reducer);
 
 window.dispatch = dispatch;
+window.goto = (...args) => dispatch("TRANSITION", ...args);
 dispatch("INIT");
 export { attach, connect };

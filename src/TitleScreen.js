@@ -6,7 +6,7 @@ export default function TitleScreen() {
     {name: "SCENE_TITLE", from: "black", to: "black"},
     html`
       <div class="ui action"
-        onclick="dispatch('TRANSITION', 'PLAY_LEVEL', 0)">
+        onclick="goto('PLAY_LEVEL', 0)">
         <div>A moment lost in time.</div>
       </div>`
   );
