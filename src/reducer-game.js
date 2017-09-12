@@ -13,7 +13,11 @@ export default function reducer(state = init, action, args) {
   switch (action) {
     case "INIT": {
       play_music();
-      return state;
+      const saved_results = localStorage.getItem("results");
+      const results = saved_results
+        ? saved_results.split(" ").map(x => parseFloat(x))
+        : [];
+      return merge(state, { results });
     }
     case "GOTO_SCENE_FIND": {
       const [index] = args;
@@ -33,13 +37,14 @@ export default function reducer(state = init, action, args) {
     case "TAKE_SNAPSHOT": {
       const { level, index, target, results } = state;
       const score = end_level(level, target);
-      return merge(state, {
-        results: [
-            ...results.slice(0, index),
-            score,
-            ...results.slice(index + 1)
-        ]
-      });
+      const new_results = [
+        ...results.slice(0, index),
+        score,
+        ...results.slice(index + 1)
+      ];
+
+      localStorage.setItem("results", new_results.join(" "));
+      return merge(state, { results: new_results });
     }
     case "GOTO_SCENE_LEVELS":
       return merge(state, { level: null });
