@@ -13,7 +13,7 @@ function FindScreen({next_scene, hue, level}) {
     html`
       <div class="ui" style="${style}"></div>
       <div class="ui action"
-        onclick="goto('START_LEVEL')">
+        onclick="goto('SCENE_PLAY')">
         <div>Find this moment.</div>
       </div>`
   );

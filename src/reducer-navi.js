@@ -5,21 +5,12 @@ const init = {
   next_scene: "SCENE_TITLE",
 }
 
-const scenes = {
-  INIT: "SCENE_TITLE",
-  PLAY_LEVEL: "SCENE_FIND",
-  START_LEVEL: "SCENE_PLAY",
-  VALIDATE_SNAPSHOT: "SCENE_SCORE",
-  PLAY_AGAIN: "SCENE_LEVELS",
-};
-
 export default function navigation(state = init, action, args) {
   switch (action) {
     case "TRANSITION": {
-      const [next_action, ...rest] = args;
-      const next_scene = scenes[next_action];
+      const [next_scene, ...rest] = args;
 
-      setTimeout(dispatch, 1000, next_action, ...rest)
+      setTimeout(dispatch, 1000, "GOTO_" + next_scene, ...rest)
       setTimeout(dispatch, 2000, "TRANSITIONED");
 
       return Object.assign({}, state, {
@@ -33,18 +24,15 @@ export default function navigation(state = init, action, args) {
       setTimeout(dispatch, 1000, "TRANSITIONED");
       return state;
     }
-    case "PLAY_LEVEL":
-    case "START_LEVEL":
-    case "PLAY_AGAIN": {
+    case "GOTO_SCENE_FIND":
+    case "GOTO_SCENE_PLAY":
+    case "GOTO_SCENE_SCORE":
+    case "GOTO_SCENE_LEVELS": {
       const { next_scene } = state;
       return Object.assign({}, state, {
         current_scene: next_scene
       });
     }
-    case "VALIDATE_SNAPSHOT":
-      return Object.assign({}, state, {
-        current_scene: "SCENE_SCORE"
-      });
     default: {
       return state;
     }

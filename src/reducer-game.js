@@ -15,7 +15,7 @@ export default function reducer(state = init, action, args) {
       play_music();
       return state;
     }
-    case "PLAY_LEVEL": {
+    case "GOTO_SCENE_FIND": {
       const [index] = args;
       const [level, hue] = create_level(index + 1);
       return merge(state, { index, level, hue });
@@ -24,13 +24,13 @@ export default function reducer(state = init, action, args) {
       const [target] = args;
       return merge(state, { target });
     }
-    case "START_LEVEL": {
+    case "GOTO_SCENE_PLAY": {
       const { level, hue, target } = state;
       // level.canvas.requestPointerLock();
       start_level(level, hue, target);
       return state;
     }
-    case "VALIDATE_SNAPSHOT": {
+    case "TAKE_SNAPSHOT": {
       const { level, index, target, results } = state;
       const score = end_level(level, target);
       return merge(state, {
@@ -41,7 +41,7 @@ export default function reducer(state = init, action, args) {
         ]
       });
     }
-    case "PLAY_AGAIN":
+    case "GOTO_SCENE_LEVELS":
       return merge(state, { level: null });
     default:
       return Object.assign({}, init, state);

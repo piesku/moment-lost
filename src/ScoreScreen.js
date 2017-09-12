@@ -11,7 +11,7 @@ function ScoreScreen({results, index, target}) {
         style="opacity: .5"
         src="${target.snapshot}">
       <div class="ui action"
-        onclick="goto('PLAY_AGAIN')">
+        onclick="goto('SCENE_LEVELS')">
         <div>${score}/100</div>
       </div>`
   );

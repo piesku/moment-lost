@@ -6,7 +6,7 @@ function LevelScore(score, idx) {
   const percent = Math.floor(score * 100);
   return html`
      <div class="box action"
-       onclick="goto('PLAY_LEVEL', ${idx})"
+       onclick="goto('SCENE_FIND', ${idx})"
        style="padding: .5rem; color: #666;">
        ${percent}</div>
   `;
@@ -25,7 +25,7 @@ function LevelSelect({results}) {
         ${results.map(LevelScore)}
         <div class="action"
           style="padding: .5rem;"
-          onclick="goto('PLAY_LEVEL', ${results.length})">next</div>
+          onclick="goto('SCENE_FIND', ${results.length})">next</div>
         </div>
       </div>`
   );
