@@ -1,7 +1,5 @@
 import { create_level, start_level, end_level } from "./game";
 import { play_music } from "./audio";
-import * as random from "./random";
-
 const init = {
   scene: "SCENE_TITLE",
   level: null,
@@ -22,14 +20,14 @@ export default function reducer(state = init, action, args) {
         scene: "SCENE_TITLE",
       });
     }
-    case "PLAY_NOW":
     case "PLAY_LEVEL": {
-      const hue = random.float(0, 1);
       const { results } = state;
-      const level = create_level(results.length + 1, hue);
+      const [index] = args;
+      const [level, hue] = create_level(index + 1);
       return merge(state, {
         scene: "SCENE_FIND",
         level,
+        index,
         hue
       });
     }
@@ -46,11 +44,15 @@ export default function reducer(state = init, action, args) {
       });
     }
     case "VALIDATE_SNAPSHOT": {
-      const { level, target, results } = state;
+      const { level, index, target, results } = state;
       const score = end_level(level, target);
       return merge(state, {
         scene: "SCENE_SCORE",
-        results: [...results, score]
+        results: [
+            ...results.slice(0, index),
+            score,
+            ...results.slice(index + 1)
+        ]
       });
     }
     case "PLAY_AGAIN":

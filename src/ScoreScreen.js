@@ -1,8 +1,8 @@
 import html from "innerself";
 import { connect } from "./store";
 
-function ScoreScreen({results, target}) {
-  const score = Math.floor(results[results.length - 1] * 100);
+function ScoreScreen({results, index, target}) {
+  const score = Math.floor(results[index] * 100);
   return html`
     <img class="ui"
       style="opacity: .5"

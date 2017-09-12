@@ -28,7 +28,7 @@ function hex(hue, lum) {
   return rgb_to_hex(rgb);
 }
 
-export function create_level(lvl_number, hue) {
+export function create_level(lvl_number) {
   random.set_seed(random.base_seed * lvl_number);
   props = [];
   birds_positions = [];
@@ -46,6 +46,7 @@ export function create_level(lvl_number, hue) {
     rotate_speed: .5,
   }));
 
+  const hue = random.float(0, 1);
   const color = hex(hue, LUMINANCE);
 
   const floor = new Plane();
@@ -98,7 +99,7 @@ export function create_level(lvl_number, hue) {
     game.stop();
   });
 
-  return game;
+  return [game, hue];
 }
 
 export function start_level(game, hue, target) {

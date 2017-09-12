@@ -1,11 +1,11 @@
 import html from "innerself";
 import { connect } from "./store";
 
-function LevelScore(num) {
-  const percent = Math.floor(num * 100);
+function LevelScore(score, idx) {
+  const percent = Math.floor(score * 100);
   return html`
-     <div class="box"
-       onclick="dispatch('PLAY_LEVEL')"
+     <div class="box action"
+       onclick="dispatch('PLAY_LEVEL', ${idx})"
        style="padding: .5rem">
        ${percent}%</div>
   `;
@@ -23,7 +23,7 @@ function LevelSelect({results}) {
       ${results.map(LevelScore)}
       <div class="action"
         style="padding: .5rem"
-        onclick="dispatch('PLAY_LEVEL')">next</div>
+        onclick="dispatch('PLAY_LEVEL', ${results.length})">next</div>
       </div>
     </div>
   `;
