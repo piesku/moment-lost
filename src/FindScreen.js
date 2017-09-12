@@ -2,11 +2,16 @@ import html from "innerself";
 import Scene from "./Scene";
 import { connect } from "./store";
 
-function FindScreen({hue, level}) {
+function FindScreen({next_scene, hue, level}) {
+  const style = next_scene === "SCENE_PLAY"
+    ? null
+    : `background: hsl(${hue * 360}, 70%, 60%); `
+      + "animation: fadein 1s 1s forwards reverse";
+
   return Scene(
     {name: "SCENE_FIND", from: "black", to: "white"},
-    // <div class="ui" style="background: hsl(${hue * 360}, 70%, 60%); ${"animation: fadeout 1s 1s forwards;"}"></div>
     html`
+      <div class="ui" style="${style}"></div>
       <div class="ui action"
         onclick="dispatch('TRANSITION', 'START_LEVEL')">
         <div>Find this moment.</div>
