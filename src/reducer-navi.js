@@ -22,6 +22,7 @@ export default function navigation(state = init, action, args) {
       setTimeout(window.dispatch, 1000, "TRANSITIONED");
       return state;
     }
+    case "GOTO_SCENE_INTRO":
     case "GOTO_SCENE_FIND":
     case "GOTO_SCENE_PLAY":
     case "GOTO_SCENE_SCORE":

@@ -16,15 +16,11 @@ function LevelSelect({results}) {
     {name: "SCENE_LEVELS", from: "black", to: "black"},
     html`
       <div class="ui black">
-        <div style="
-          display: flex;
-          flex-wrap: wrap;
-          max-width: 1280px;
-          max-height: 720px">
-        ${results.map(LevelScore)}
-        <div class="action"
-          style="padding: .5rem;"
-          onclick="goto('SCENE_FIND', ${results.length})">next</div>
+        <div class="pad">
+          ${results.map(LevelScore)}
+          <div class="action"
+            style="padding: .5rem;"
+            onclick="goto('SCENE_FIND', ${results.length})">next</div>
         </div>
       </div>`
   );

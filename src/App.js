@@ -1,17 +1,19 @@
 import { connect } from "./store";
 
 import TitleScreen from "./TitleScreen";
-import LevelSelect from "./LevelSelect";
+import IntroScreen from "./IntroScreen";
 import FindScreen from "./FindScreen";
-import ScoreScreen from "./ScoreScreen";
 import PlayOverlay from "./PlayOverlay";
+import ScoreScreen from "./ScoreScreen";
+import LevelSelect from "./LevelSelect";
 
 const scenes = {
   "SCENE_TITLE": TitleScreen,
-  "SCENE_LEVELS": LevelSelect,
+  "SCENE_INTRO": IntroScreen,
   "SCENE_FIND": FindScreen,
-  "SCENE_SCORE": ScoreScreen,
   "SCENE_PLAY": PlayOverlay,
+  "SCENE_SCORE": ScoreScreen,
+  "SCENE_LEVELS": LevelSelect,
 };
 
 function App({current_scene}) {
