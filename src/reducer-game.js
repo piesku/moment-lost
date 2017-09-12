@@ -1,52 +1,39 @@
 import { create_level, start_level, end_level } from "./game";
 import { play_music } from "./audio";
+import { merge } from "./util";
+
 const init = {
-  scene: "SCENE_TITLE",
   level: null,
   hue: 0,
   target: null,
   results: [],
 };
 
-function merge(...objs) {
-  return Object.assign({}, ...objs);
-}
-
 export default function reducer(state = init, action, args) {
   switch (action) {
     case "INIT": {
       play_music();
-      return merge(state, {
-        scene: "SCENE_TITLE",
-      });
+      return state;
     }
-    case "PLAY_LEVEL": {
+    case "GOTO_SCENE_FIND": {
       const [index] = args;
       const [level, hue] = create_level(index + 1);
-      return merge(state, {
-        scene: "SCENE_FIND",
-        level,
-        index,
-        hue
-      });
+      return merge(state, { index, level, hue });
     }
     case "SNAPSHOT_TAKEN": {
       const [target] = args;
       return merge(state, { target });
     }
-    case "START_LEVEL": {
+    case "GOTO_SCENE_PLAY": {
       const { level, hue, target } = state;
       // level.canvas.requestPointerLock();
       start_level(level, hue, target);
-      return merge(state, {
-        scene: "SCENE_PLAY",
-      });
+      return state;
     }
-    case "VALIDATE_SNAPSHOT": {
+    case "TAKE_SNAPSHOT": {
       const { level, index, target, results } = state;
       const score = end_level(level, target);
       return merge(state, {
-        scene: "SCENE_SCORE",
         results: [
             ...results.slice(0, index),
             score,
@@ -54,12 +41,9 @@ export default function reducer(state = init, action, args) {
         ]
       });
     }
-    case "PLAY_AGAIN":
-      return merge(state, {
-        scene: "SCENE_LEVELS",
-        level: null
-      });
+    case "GOTO_SCENE_LEVELS":
+      return merge(state, { level: null });
     default:
-      return state;
+      return Object.assign({}, init, state);
   }
 }
