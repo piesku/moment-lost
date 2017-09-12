@@ -12,7 +12,9 @@ function TitleScreen({results}) {
     html`
       <div class="ui action"
         onclick="${onclick}">
-        <div>A moment lost in time.</div>
+        <div style="margin: 1.3rem 0 1rem;">A moment lost in time.</div>
+        <div style="font-size: 0.3rem; animation: fadein 1s 3s both">
+          A story by <a href="https://piesku.com">piesku.com</a>.</div>
       </div>`
   );
 }
