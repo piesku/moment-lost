@@ -26,8 +26,8 @@ function ScoreScreen({results, index, target}) {
         src="${target.snapshot}">
       <div class="ui action"
         onclick="goto('SCENE_LEVELS')">
-        <div class="pad">${message}</div>
-        <div class="pad">${results[index]}</div>
+        <div class="pad" style="margin: 1.5rem 0 1rem;">${message}</div>
+        <div>${results[index]}</div>
       </div>`
   );
 }
