@@ -13,6 +13,7 @@ import Footsteps from "./footsteps";
 import { distance } from "gl-matrix/src/gl-matrix/vec3";
 import { spawn_birds } from "./bird";
 
+const DEBUG = true;
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
@@ -73,17 +74,23 @@ export function create_level(lvl_number) {
     random.look_at_target(game.camera.get_component(Transform).matrix)
   );
 
+  if (!DEBUG) {
+    delete game.camera.get_component(Move).dir_desc['69'];
+    delete game.camera.get_component(Move).dir_desc['81'];
+  }
+
   const spawners = random.integer(2, 4);
   for (let i = 0; i < spawners; i++) {
     const birds_position = random.position([0, 0], WORLD_SIZE/3, -3);
     birds_positions.push(birds_position);
 
-    // XXX: Uncomment here to see birds' spawning points
-    const bird_spawner = element(1, color, 3)[0];
-    bird_spawner.get_component(Transform).set({
-      position: birds_position
-    });
-    game.add(bird_spawner);
+    if (DEBUG) {
+      const bird_spawner = element(1, color, 3)[0];
+      bird_spawner.get_component(Transform).set({
+        position: birds_position
+      });
+      game.add(bird_spawner);
+    }
   }
 
 
