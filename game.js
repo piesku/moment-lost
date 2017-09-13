@@ -54,6 +54,7 @@ const SCENES = {
   PLAY: 3,
   SCORE: 4,
   LEVELS: 5,
+  NOPASS: 6,
 };
 
 const ACTIONS = {
@@ -61,6 +62,7 @@ const ACTIONS = {
   SAVE_SNAPSHOT: 11,
   WARN_IDLE: 12,
   VALIDATE_SNAPSHOT: 13,
+  LOCK_POINTER: 14,
 };
 
 function merge(...objs) {
@@ -93,7 +95,8 @@ function navigation(state = init, action, args) {
     case SCENES.FIND:
     case SCENES.PLAY:
     case SCENES.SCORE:
-    case SCENES.LEVELS: {
+    case SCENES.LEVELS:
+    case SCENES.NOPASS: {
       const { next_scene } = state;
       return merge(state, { current_scene: next_scene });
     }
@@ -4765,10 +4768,15 @@ function reducer$1(state = init$1, action, args) {
       const [target] = args;
       return merge(state, { target });
     }
+    case ACTIONS.LOCK_POINTER: {
+      const { level } = state;
+      level.canvas.requestPointerLock();
+      return state;
+    }
     case SCENES.PLAY: {
       const { level, hue, target } = state;
-      // level.canvas.requestPointerLock();
       start_level(level, hue, target);
+      level.canvas.addEventListener("click", oncanvasclick);
       setup_idle();
       return merge(state, { idle_reason: null });
     }
@@ -4786,6 +4794,8 @@ function reducer$1(state = init$1, action, args) {
       ];
 
       clear_idle();
+      level.canvas.removeEventListener("click", oncanvasclick);
+      document.exitPointerLock();
       localStorage.setItem("results", new_results.join(" "));
       return merge(state, { results: new_results });
     }
@@ -4793,6 +4803,11 @@ function reducer$1(state = init$1, action, args) {
       return merge(state, { level: null });
     default:
       return Object.assign({}, init$1, state);
+  }
+
+  function oncanvasclick(event) {
+    window.dispatch(ACTIONS.VALIDATE_SNAPSHOT);
+    window.goto(SCENES.SCORE);
   }
 }
 
@@ -4875,7 +4890,7 @@ function FindScreen({next_scene, hue}) {
     html`
       <div class="ui" style="${style}"></div>
       <div class="ui action"
-        onclick="goto(${SCENES.PLAY})">
+        onclick="dispatch(${ACTIONS.LOCK_POINTER}); goto(${SCENES.PLAY})">
         <div class="pad">Find this moment.</div>
       </div>`
   );
@@ -4957,9 +4972,8 @@ function LevelSelect({results}) {
             ? `<div class="action" style="padding: .5rem;"
                 onclick="goto(${SCENES.FIND}, ${results.length})">next</div>`
             : `<div class="action" style="padding: .5rem;"
-                title="Collect more accurate moments before advancing.">
-                …?
-               </div>`
+                onclick="goto(${SCENES.NOPASS})"
+                title="Collect more accurate moments before advancing.">…?</div>`
            }
         </div>
       </div>`
@@ -4968,6 +4982,20 @@ function LevelSelect({results}) {
 
 var LevelSelect$1 = connect(LevelSelect);
 
+function NoPassage() {
+  return Scene$1(
+    {id: SCENES.NOPASS, from: "black", to: "black"},
+    html`
+      <div class="ui action black"
+        onclick="goto(${SCENES.LEVELS})">
+        <div class="pad">
+          The path onward is never easy.
+          Collect more accurate moments before venturing forth.
+        </div>
+      </div>`
+  );
+}
+
 const scenes = [
   TitleScreen,
   IntroScreen$1,
@@ -4975,6 +5003,7 @@ const scenes = [
   PlayOverlay$1,
   ScoreScreen$1,
   LevelSelect$1,
+  NoPassage,
 ];
 
 function App({current_scene}) {
