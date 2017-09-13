@@ -4942,15 +4942,25 @@ function LevelScore(score, idx) {
 }
 
 function LevelSelect({results}) {
+  const total = results.reduce((acc, cur) => acc + cur);
+  const average = Math.floor(total / results.length);
+  // An inverted hyperbola with lim(x → ∞) = 1.
+  const threshold = 100 * (1 - 2.5 / results.length);
+
   return Scene$1(
     {id: SCENES.LEVELS, from: "black", to: "black"},
     html`
       <div class="ui black">
         <div class="pad">
           ${results.map(LevelScore)}
-          <div class="action"
-            style="padding: .5rem;"
-            onclick="goto(${SCENES.FIND}, ${results.length})">next</div>
+          ${ average > threshold
+            ? `<div class="action" style="padding: .5rem;"
+                onclick="goto(${SCENES.FIND}, ${results.length})">next</div>`
+            : `<div class="action" style="padding: .5rem;"
+                title="Your average so far is too low to advance.">
+                …?
+               </div>`
+           }
         </div>
       </div>`
   );
