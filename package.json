@@ -1,9 +1,9 @@
 {
   "name": "a-moment-lost-in-time",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "private": true,
   "author": "piesku.com <piesku.com@gmail.com>",
-  "description": "A moment lost in time. A submission for js13kgames.",
+  "description": "A moment lost in time. A submission for js13kGames.",
   "license": "ISC",
   "scripts": {
     "deploy": "rollup -c rollup-gh.js && gh-pages -d public",
