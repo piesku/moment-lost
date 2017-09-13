@@ -8,12 +8,11 @@ import { rgb_to_hex, hsl_to_rgb } from "cervus/utils";
 import { element } from "./level-elements.js";
 import * as random from "./random";
 import { DummyLookAt, get_score, get_hint } from "./score";
-import Footsteps from "./footsteps";
 
 import { distance } from "gl-matrix/src/gl-matrix/vec3";
 import { spawn_birds } from "./bird";
 
-const DEBUG = true;
+const DEBUG = false;
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
@@ -101,7 +100,7 @@ export function create_level(lvl_number) {
       position: game.camera.get_component(Transform).position,
       rotation: game.camera.get_component(Transform).rotation,
     };
-    window.dispatch('SNAPSHOT_TAKEN', target);
+    window['dispatch']('SNAPSHOT_TAKEN', target);
     game.stop();
   });
 
@@ -117,7 +116,6 @@ export function start_level(game, hue, target) {
   game.camera.get_component(Move).keyboard_controlled = true;
   game.camera.get_component(Move).mouse_controlled = true;
   game.camera.add_component(new DummyLookAt({target}));
-  game.camera.add_component(new Footsteps());
 
   for (const entity of game.entities) {
     entity.get_component(Render).color = "#000000";
@@ -141,7 +139,7 @@ export function start_level(game, hue, target) {
     }
   });
 
-  game.on("afterrender", function hint() {
+  game.on("afterrender", function () {
     const hint = get_hint(target, game.camera, WORLD_SIZE);
     // XXX Change color on the material instance?
     for (const entity of game.entities) {

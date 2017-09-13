@@ -13,7 +13,7 @@ export class DummyLookAt extends Transform {
  * Descending quarter circle for x in [0, 1].
  */
 function smooth(x) {
-  return Math.sqrt(1 - x ** 2);
+  return Math.sqrt(Math.pow(1 - x, 2));
 }
 
 function position_score(target, current, world_size) {

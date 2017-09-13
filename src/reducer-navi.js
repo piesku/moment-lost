@@ -10,8 +10,8 @@ export default function navigation(state = init, action, args) {
     case "TRANSITION": {
       const [next_scene, ...rest] = args;
 
-      setTimeout(window.dispatch, 1000, "GOTO_" + next_scene, ...rest)
-      setTimeout(window.dispatch, 2000, "TRANSITIONED");
+      setTimeout(window['dispatch'], 1000, "GOTO_" + next_scene, ...rest)
+      setTimeout(window['dispatch'], 2000, "TRANSITIONED");
 
       return merge(state, { next_scene });
     }
@@ -19,7 +19,7 @@ export default function navigation(state = init, action, args) {
       return merge(state, { next_scene: null });
     }
     case "INIT": {
-      setTimeout(window.dispatch, 1000, "TRANSITIONED");
+      setTimeout(window['dispatch'], 1000, "TRANSITIONED");
       return state;
     }
     case "GOTO_SCENE_INTRO":
