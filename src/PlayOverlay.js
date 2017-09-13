@@ -9,7 +9,7 @@ function PlayOverlay({idle_reason}) {
     : "Move the mouse.";
 
   return Scene(
-    {id: SCENES.PLAY, from: "white", to: "white"},
+    {id: SCENES.PLAY, from: "white", to: "white", flash: true},
     html`<div class="ui"
       onclick="dispatch(${ACTIONS.VALIDATE_SNAPSHOT}); goto(${SCENES.SCORE})">
         ${ idle_reason &&
