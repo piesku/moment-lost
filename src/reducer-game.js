@@ -68,7 +68,7 @@ export default function reducer(state = init, action, args) {
       return Object.assign({}, init, state);
   }
 
-  function oncanvasclick(event) {
+  function oncanvasclick() {
     window.dispatch(ACTIONS.VALIDATE_SNAPSHOT);
     window.goto(SCENES.SCORE);
   }
