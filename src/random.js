@@ -39,7 +39,7 @@ export function position([x, z], max_radius, y = 1.5) {
 
 export function look_at_target(matrix) {
   const azimuth = float(-Math.PI/10, Math.PI/10);
-  const polar = float(0, Math.PI / 6);
+  const polar = float(0, Math.PI / 10);
 
   const target = vec3.of(
     Math.cos(polar) * Math.sin(azimuth),

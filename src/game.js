@@ -13,7 +13,7 @@ import { DummyLookAt, get_score, get_hint } from "./score";
 import { distance } from "gl-matrix/src/gl-matrix/vec3";
 import { spawn_birds } from "./bird";
 
-const DEBUG = false;
+const DEBUG = true;
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
@@ -79,8 +79,8 @@ export function create_level(lvl_number) {
     delete game.camera.get_component(Move).dir_desc['81'];
   }
 
-  game.camera.get_component(Move).dir_desc['81'] = 'l';
-  game.camera.get_component(Move).dir_desc['90'] = 'f';
+  // game.camera.get_component(Move).dir_desc['81'] = 'l';
+  // game.camera.get_component(Move).dir_desc['90'] = 'f';
 
   const spawners = random.integer(2, 4);
   for (let i = 0; i < spawners; i++) {

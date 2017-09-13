@@ -35,6 +35,7 @@ export function spawn_birds(position, color, radius, qty, game) {
       bird.get_component(Morph).frames = bird_model;
       bird.get_component(Transform).look_at(target_position);
       bird.get_component(Transform).rotate_ud(Math.PI/2);
+      bird.get_component(Transform).rotate_rl(Math.PI);
       bird.get_component(Morph).create_buffers();
       game.add(bird);
 
