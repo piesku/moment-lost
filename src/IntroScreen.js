@@ -16,7 +16,7 @@ function IntroScreen({results}) {
           All those moments will be lost in time, like tears in rain.
         </div>
         <div class="pad">
-          Collect your memories before they vanish.
+          Collect your memories before they fade away.
         </div>
       </div>`
   );

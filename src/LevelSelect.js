@@ -28,7 +28,7 @@ function LevelSelect({results}) {
             ? `<div class="action" style="padding: .5rem;"
                 onclick="goto(${SCENES.FIND}, ${results.length})">next</div>`
             : `<div class="action" style="padding: .5rem;"
-                title="Your average so far is too low to advance.">
+                title="Collect more accurate moments before advancing.">
                 …?
                </div>`
            }
