@@ -31,10 +31,15 @@ export default function reducer(state = init, action, args) {
       const [target] = args;
       return merge(state, { target });
     }
+    case ACTIONS.LOCK_POINTER: {
+      const { level } = state;
+      level.canvas.requestPointerLock();
+      return state;
+    }
     case SCENES.PLAY: {
       const { level, hue, target } = state;
-      // level.canvas.requestPointerLock();
       start_level(level, hue, target);
+      level.canvas.addEventListener("click", oncanvasclick);
       setup_idle();
       return merge(state, { idle_reason: null });
     }
@@ -52,6 +57,8 @@ export default function reducer(state = init, action, args) {
       ];
 
       clear_idle();
+      level.canvas.removeEventListener("click", oncanvasclick);
+      document.exitPointerLock();
       localStorage.setItem("results", new_results.join(" "));
       return merge(state, { results: new_results });
     }
@@ -59,5 +66,10 @@ export default function reducer(state = init, action, args) {
       return merge(state, { level: null });
     default:
       return Object.assign({}, init, state);
+  }
+
+  function oncanvasclick(event) {
+    window.dispatch(ACTIONS.VALIDATE_SNAPSHOT);
+    window.goto(SCENES.SCORE);
   }
 }

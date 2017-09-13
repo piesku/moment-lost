@@ -1,6 +1,6 @@
 import html from "innerself";
 import Scene from "./Scene";
-import { SCENES } from "./actions"
+import { SCENES, ACTIONS } from "./actions"
 import { connect } from "./store";
 
 function FindScreen({next_scene, hue}) {
@@ -14,7 +14,7 @@ function FindScreen({next_scene, hue}) {
     html`
       <div class="ui" style="${style}"></div>
       <div class="ui action"
-        onclick="goto(${SCENES.PLAY})">
+        onclick="dispatch(${ACTIONS.LOCK_POINTER}); goto(${SCENES.PLAY})">
         <div class="pad">Find this moment.</div>
       </div>`
   );
