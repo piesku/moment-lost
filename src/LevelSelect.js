@@ -13,7 +13,7 @@ function LevelScore(score, idx) {
 }
 
 function LevelSelect({results}) {
-  const total = results.reduce((acc, cur) => acc + cur);
+  const total = results.reduce((acc, cur) => acc + cur, 0);
   const average = Math.floor(total / results.length);
   // An inverted hyperbola with lim(x → ∞) = 1.
   const threshold = 100 * (1 - 2.5 / results.length);
