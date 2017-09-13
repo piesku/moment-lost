@@ -47,16 +47,60 @@ function create_store(reducer) {
     };
 }
 
-function logger(reducer) {
-    return function(prev_state, action, args) {
-        console.group(action);
-        console.log("Previous State", prev_state);
-        console.log("Action Arguments", args);
-        const next_state = reducer(prev_state, action, args);
-        console.log("Next State", next_state);
-        console.groupEnd();
-        return next_state;
+const SCENES = {
+  TITLE: 0,
+  INTRO: 1,
+  FIND: 2,
+  PLAY: 3,
+  SCORE: 4,
+  LEVELS: 5,
+};
+
+const ACTIONS = {
+  INIT: 10,
+  SAVE_SNAPSHOT: 11,
+  WARN_IDLE: 12,
+  VALIDATE_SNAPSHOT: 13,
+};
+
+function merge(...objs) {
+  return Object.assign({}, ...objs);
+}
+
+const init = {
+  current_scene: SCENES.TITLE,
+  next_scene: SCENES.TITLE,
+};
+
+function navigation(state = init, action, args) {
+  switch (action) {
+    case "T0": {
+      const [next_scene, ...rest] = args;
+
+      setTimeout(window['dispatch'], 1000, next_scene, ...rest);
+      setTimeout(window['dispatch'], 2000, "T1");
+
+      return merge(state, { next_scene });
     }
+    case "T1": {
+      return merge(state, { next_scene: null });
+    }
+    case ACTIONS.INIT: {
+      setTimeout(window['dispatch'], 1000, "T1");
+      return state;
+    }
+    case SCENES.INTRO:
+    case SCENES.FIND:
+    case SCENES.PLAY:
+    case SCENES.SCORE:
+    case SCENES.LEVELS: {
+      const { next_scene } = state;
+      return merge(state, { current_scene: next_scene });
+    }
+    default: {
+      return state;
+    }
+  }
 }
 
 function hex_to_rgb(hex) {
@@ -2936,8 +2980,9 @@ class Entity {
       return;
     }
 
-    this.components.forEach(component => component.update(tick_delta));
-    this.entities.forEach(entity => entity.update(tick_delta));
+    const update_each = updatable => updatable.update(tick_delta);
+    this.components.forEach(update_each);
+    this.entities.forEach(update_each);
   }
 
   render(tick_delta) {
@@ -2949,7 +2994,6 @@ class Entity {
     this.components.forEach(render_each);
     this.entities.forEach(render_each);
   }
-
 }
 
 const default_options$3 = {
@@ -3003,8 +3047,6 @@ class Transform extends Component {
       world_matrix: create$1(),
       world_to_self: create$1()
     },  default_options$2, options));
-
-    Object.assign(this,  default_options$2, options);
   }
 
   get up() {
@@ -3193,7 +3235,7 @@ class Move extends Component {
     Object.assign(this,  default_options$5, options);
   }
 
-  handle_keys(tick_length, {f, b, l, r, u, d, pu, pd, yl, yr}) {
+  handle_keys(tick_length, {f = 0, b = 0, l = 0, r = 0, u = 0, d = 0, pu = 0, pd = 0, yl = 0, yr = 0}) {
     const entity_transform = this.entity.get_component(Transform);
     const dist = tick_length / 1000 * this.move_speed;
 
@@ -3529,18 +3571,15 @@ class Tween {
     this.game = options.game;
     this.object = options.object;
     this.property = options.property;
+    this.cb = options.cb;
   }
 
-  do_step(tick, resolve) {
+  do_step(tick) {
     this.current_step = Math.min(
       1,
       ((tick - this.first_tick) / this.tick_delta) * this.step
     );
     this.action();
-    if (this.current_step === 1) {
-      this.game.off('tick', this.do_step.bound);
-      resolve();
-    }
   }
 
   action() {}
@@ -3555,10 +3594,15 @@ class Tween {
   start() {
     this.pre_start();
     return new Promise((resolve) => {
-      this.do_step.bound = (tick) => {
-        this.do_step(tick, resolve);
+      const bound = (tick) => {
+        if (this.current_step === 1) {
+          this.game.off('tick', bound);
+          resolve();
+        } else {
+          this.do_step(tick, resolve);
+        }
       };
-      this.game.on('tick', this.do_step.bound);
+      this.game.on('tick', bound);
     });
   }
 }
@@ -3571,8 +3615,18 @@ class Material {
 
   setup_program() {
     this.program = create_program_object(
-      create_shader_object(gl.VERTEX_SHADER, this.get_shader_code('vertex')),
-      create_shader_object(gl.FRAGMENT_SHADER, this.get_shader_code('fragment'))
+      create_shader_object(
+        gl.VERTEX_SHADER,
+        this.get_shader_code(
+          this.vertex_shader.variables,
+          this.vertex_shader.body
+        )
+      ),
+      create_shader_object(gl.FRAGMENT_SHADER,
+        this.get_shader_code(
+          this.fragment_shader.variables,
+          this.fragment_shader.body
+        ))
     );
 
     if (this.program.error) {
@@ -3590,14 +3644,14 @@ class Material {
     });
   }
 
-  get_shader_code(type) {
+  get_shader_code(variables, body) {
     return `
       precision mediump float;
-      ${this[type + '_shader'].variables}
+      ${variables}
 
       void main()
       {
-        ${this[type + '_shader'].body}
+        ${body}
       }
     `;
   }
@@ -4002,7 +4056,7 @@ class PhongMaterial extends Material {
 
 const phong = new PhongMaterial();
 
-const base_seed = 3061987;
+const base_seed = 19870306 * 6647088;
 
 let seed = base_seed;
 
@@ -4042,7 +4096,7 @@ function position([x, z], max_radius, y = 1.5) {
 
 function look_at_target(matrix) {
   const azimuth = float(-Math.PI/10, Math.PI/10);
-  const polar = float(0, Math.PI / 6);
+  const polar = float(0, Math.PI / 10);
 
   const target = of(
     Math.cos(polar) * Math.sin(azimuth),
@@ -4152,7 +4206,7 @@ class DummyLookAt extends Transform {
  * Descending quarter circle for x in [0, 1].
  */
 function smooth(x) {
-  return Math.sqrt(1 - x ** 2);
+  return Math.sqrt(Math.pow(1 - x, 2));
 }
 
 function position_score(target, current, world_size) {
@@ -4165,6 +4219,12 @@ function rotation_score(target, current) {
   return Math.abs(dot$3(target, current));
 }
 
+/*
+ * Calculate the hint in range [0, 1].
+ *
+ * This takes into account the fact that the user might be looking _at_ the
+ * target, too.  The hint is only used to scale the luminance of the world.
+ */
 function get_hint(target, camera, world_size) {
   const transform = camera.get_component(Transform);
   const dummy = camera.get_component(DummyLookAt);
@@ -4184,6 +4244,9 @@ function get_hint(target, camera, world_size) {
   return (p + r) / 2 / 2;
 }
 
+/*
+ * Calculate the final score for the level in range [0, 1].
+ */
 function get_score(target, camera, world_size) {
   const transform = camera.get_component(Transform);
 
@@ -4193,6 +4256,27 @@ function get_score(target, camera, world_size) {
   // See https://slack-files.com/T137YH5CK-F70S69J0J-51a91c0eaa
   // The division normalizes the result in the [0, 1] range.
   return (p * Math.sin(r) + r * Math.sin(p)) / (2 * Math.sin(1));
+}
+
+const bird_model_vertices = [
+  [0, 1, 0.0432336, 0, 2.66717, -0.0897549, -0.311383, 2.19602, 0.234146, -0.63757, 1.36243, 0.125756, -2.39534, 2.44478, -0.378434, -1.73172, -1.46682, -0.378434, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, 0.108391, 0, -1.67049, -0.39161, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.234146, -2.39534, 2.44478, -0.126923, -3.45125, 2.35058, -3.40775, -1.73172, -1.46682, -0.126923, -3.10363, 0.637105, -3.60768, 0, 1, 0.40839, 0, -1.67049, 0.464128, 0, -2.87961, 0.359902, 0, 2.16981, 0.60839, 0, 1, 0.0432336, 0, 2.66717, -0.0897549, 0.311383, 2.19602, 0.234146, 0.63757, 1.36243, 0.125756, 2.39534, 2.44478, -0.378434, 1.73172, -1.46682, -0.378434, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, 0.108391, 0, -1.67049, -0.39161, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.234146, 2.39534, 2.44478, -0.126923, 3.45125, 2.35058, -3.40775, 1.73172, -1.46682, -0.126923, 3.10363, 0.637105, -3.60768, 0, 1, 0.40839, 0, -1.67049, 0.464128, 0, -2.87961, 0.359902, 0, 2.16981, 0.60839],
+  // [0, 1, -0.0651568, 0, 2.66717, -0.198145, -0.311383, 2.19602, 0.125756, -0.63757, 1.36243, 0.125756, -2.73117, 2.7172, 0.268059, -1.87832, -1.46682, 0.268059, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, 1.19209e-7, 0, -1.67049, -0.5, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.125755, -2.73117, 2.7172, 0.51957, -6.61669, 2.97823, -0.513461, -1.87832, -1.46682, 0.51957, -6.56954, 1.24407, -0.513461, 0, 1, 0.3, 0, -1.67049, 0.355737, 0, -2.87961, 0.251511, 0, 2.16981, 0.5, 0, 1, -0.0651568, 0, 2.66717, -0.198145, 0.311383, 2.19602, 0.125756, 0.63757, 1.36243, 0.125756, 2.73117, 2.7172, 0.268059, 1.87832, -1.46682, 0.268059, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, 1.19209e-7, 0, -1.67049, -0.5, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.125755, 2.73117, 2.7172, 0.51957, 6.61669, 2.97823, -0.513461, 1.87832, -1.46682, 0.51957, 6.56954, 1.24407, -0.513461, 0, 1, 0.3, 0, -1.67049, 0.355737, 0, -2.87961, 0.251511, 0, 2.16981, 0.5],
+  [0, 1, -0.18593, 0, 2.66717, -0.318919, -0.311383, 2.19602, 0.00498234, -0.63757, 1.36243, 0.125756, -2.13574, 2.71753, 0.924384, -1.27253, -1.44252, 0.497551, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, -0.120773, 0, -1.67049, -0.620773, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.00498211, -2.13066, 2.69291, 1.17464, -5.74559, 1.12196, 4.29641, -1.26745, -1.46715, 0.747802, -5.69843, -0.612202, 4.29641, 0, 1, 0.179227, 0, -1.67049, 0.234964, 0, -2.87961, 0.130738, 0, 2.16981, 0.379227, 0, 1, -0.18593, 0, 2.66717, -0.318919, 0.311383, 2.19602, 0.00498234, 0.63757, 1.36243, 0.125756, 2.13574, 2.71753, 0.924384, 1.27253, -1.44252, 0.497551, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, -0.120773, 0, -1.67049, -0.620773, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.00498211, 2.13066, 2.69291, 1.17464, 5.74559, 1.12196, 4.29641, 1.26745, -1.46715, 0.747802, 5.69843, -0.612202, 4.29641, 0, 1, 0.179227, 0, -1.67049, 0.234964, 0, -2.87961, 0.130738, 0, 2.16981, 0.379227]
+];
+
+const bird_model_indices = [2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 19, 1, 2, 19, 1, 2, 2, 16, 19, 2, 16, 19, 2, 3, 16, 2, 3, 16, 16, 3, 6, 16, 6, 17, 16, 3, 6, 16, 6, 17, 7, 18, 17, 7, 17, 6, 7, 18, 17, 7, 17, 6, 10, 11, 18, 10, 18, 7, 10, 11, 18, 10, 18, 7, 8, 11, 10, 8, 10, 7, 8, 11, 10, 8, 10, 7, 9, 8, 7, 9, 8, 7, 9, 7, 6, 9, 7, 6, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 4, 12, 3, 4, 12, 3, 5, 13, 4, 13, 12, 4, 5, 13, 4, 13, 12, 4, 15, 14, 12, 15, 12, 13, 15, 14, 12, 15, 12, 13, 14, 15, 5, 14, 15, 5, 5, 15, 13, 5, 15, 13, 20, 21, 22, 29, 20, 23, 23, 20, 22, 20, 21, 22, 29, 20, 23, 23, 20, 22, 22, 21, 39, 22, 21, 39, 36, 23, 22, 39, 36, 22, 36, 23, 22, 39, 36, 22, 37, 23, 36, 37, 23, 36, 26, 37, 38, 37, 26, 23, 26, 37, 38, 37, 26, 23, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 27, 38, 30, 27, 30, 28, 27, 38, 30, 27, 30, 28, 38, 31, 30, 38, 31, 30, 30, 31, 28, 30, 31, 28, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 24, 33, 35, 24, 32, 33, 24, 33, 35, 24, 32, 33, 23, 32, 24, 23, 32, 24, 23, 24, 25, 23, 24, 25, 24, 35, 25, 24, 35, 25];
+
+class VecTween extends Tween {
+  action() {
+    const _from = [];
+    lerp(_from, this.from, this.to, this.current_step);
+    this.object[this.property] = _from;
+  }
+
+  pre_start() {
+    super.pre_start();
+    this.from = this.object[this.property].slice();
+  }
 }
 
 // Audio doesn't use the seeded RNG from ./random because we don't know how
@@ -4279,29 +4363,6 @@ function play_music() {
   setTimeout(play_music, 2000 + integer$1(0, 10000));
 }
 
-function play_footstep(freq = 50) {
-  const oscillator = context.createOscillator();
-  oscillator.frequency.value = freq;
-
-  const base = context.createOscillator();
-  base.frequency.value = freq - 20;
-
-  const envelope = context.createGain();
-  envelope.gain.value = 1.5;
-  envelope.gain.setTargetAtTime(0, context.currentTime + .005, 0.01);
-
-  base.connect(envelope);
-  oscillator.connect(envelope);
-  envelope.connect(context.destination);
-
-  base.start();
-  oscillator.start();
-
-  const end_time = context.currentTime + 0.1;
-  base.stop(end_time);
-  oscillator.stop(end_time);
-}
-
 function fm_synth(audio_context, carrier, modulator, mod_gain) {
   this.modulator_gain = audio_context.createGain();
   this.modulator_gain.gain.value = mod_gain || 300;
@@ -4327,7 +4388,7 @@ function am_synth(audio_context, node1, node2) {
   node1.connect(am_gain);
   node2.connect(am_gain.gain);
 
-  this.connect = function(audio_node){
+  this.connect = function(audio_node) {
     am_gain.disconnect();
     am_gain.connect(audio_node);
   };
@@ -4345,7 +4406,7 @@ function param_ead(audio_context, param, attack_time, decay_time, min, max) {
   this.decay_time = decay_time || 0.9;
 
   this.min = min || 0;
-  this.max = max || 1;
+  this.max = max || 50;
 
   this.trigger = time => {
     var start_time = time || audio_context.currentTime;
@@ -4453,51 +4514,11 @@ function play_bird_sound(position) {
   }
 }
 
-class Footsteps extends Component {
-  mount() {
-    this.transform = this.entity.get_component(Transform);
-    this.footstep_every = 15;
-    this.prev_position = this.transform.position;
-
-    this.traveled = 0;
-  }
-
-  update() {
-    this.traveled += distance$2(this.prev_position, this.transform.position);
-    this.prev_position = this.transform.position;
-
-    if (this.traveled > this.footstep_every) {
-      this.traveled %= this.footstep_every;
-      play_footstep();
-    }
-  }
-}
-
-const bird_model = [{
-  "vertices": [0, 1, 0.0432336, 0, 2.66717, -0.0897549, -0.311383, 2.19602, 0.234146, -0.63757, 1.36243, 0.125756, -2.39534, 2.44478, -0.378434, -1.73172, -1.46682, -0.378434, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, 0.108391, 0, -1.67049, -0.39161, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.234146, -2.39534, 2.44478, -0.126923, -3.45125, 2.35058, -3.40775, -1.73172, -1.46682, -0.126923, -3.10363, 0.637105, -3.60768, 0, 1, 0.40839, 0, -1.67049, 0.464128, 0, -2.87961, 0.359902, 0, 2.16981, 0.60839, 0, 1, 0.0432336, 0, 2.66717, -0.0897549, 0.311383, 2.19602, 0.234146, 0.63757, 1.36243, 0.125756, 2.39534, 2.44478, -0.378434, 1.73172, -1.46682, -0.378434, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, 0.108391, 0, -1.67049, -0.39161, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.234146, 2.39534, 2.44478, -0.126923, 3.45125, 2.35058, -3.40775, 1.73172, -1.46682, -0.126923, 3.10363, 0.637105, -3.60768, 0, 1, 0.40839, 0, -1.67049, 0.464128, 0, -2.87961, 0.359902, 0, 2.16981, 0.60839],
-  "indices": [2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 19, 1, 2, 19, 1, 2, 2, 16, 19, 2, 16, 19, 2, 3, 16, 2, 3, 16, 16, 3, 6, 16, 6, 17, 16, 3, 6, 16, 6, 17, 7, 18, 17, 7, 17, 6, 7, 18, 17, 7, 17, 6, 10, 11, 18, 10, 18, 7, 10, 11, 18, 10, 18, 7, 8, 11, 10, 8, 10, 7, 8, 11, 10, 8, 10, 7, 9, 8, 7, 9, 8, 7, 9, 7, 6, 9, 7, 6, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 4, 12, 3, 4, 12, 3, 5, 13, 4, 13, 12, 4, 5, 13, 4, 13, 12, 4, 15, 14, 12, 15, 12, 13, 15, 14, 12, 15, 12, 13, 14, 15, 5, 14, 15, 5, 5, 15, 13, 5, 15, 13, 20, 21, 22, 29, 20, 23, 23, 20, 22, 20, 21, 22, 29, 20, 23, 23, 20, 22, 22, 21, 39, 22, 21, 39, 36, 23, 22, 39, 36, 22, 36, 23, 22, 39, 36, 22, 37, 23, 36, 37, 23, 36, 26, 37, 38, 37, 26, 23, 26, 37, 38, 37, 26, 23, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 27, 38, 30, 27, 30, 28, 27, 38, 30, 27, 30, 28, 38, 31, 30, 38, 31, 30, 30, 31, 28, 30, 31, 28, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 24, 33, 35, 24, 32, 33, 24, 33, 35, 24, 32, 33, 23, 32, 24, 23, 32, 24, 23, 24, 25, 23, 24, 25, 24, 35, 25, 24, 35, 25]
-}, {
-  "vertices": [0, 1, -0.0651568, 0, 2.66717, -0.198145, -0.311383, 2.19602, 0.125756, -0.63757, 1.36243, 0.125756, -2.73117, 2.7172, 0.268059, -1.87832, -1.46682, 0.268059, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, 1.19209e-7, 0, -1.67049, -0.5, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.125755, -2.73117, 2.7172, 0.51957, -6.61669, 2.97823, -0.513461, -1.87832, -1.46682, 0.51957, -6.56954, 1.24407, -0.513461, 0, 1, 0.3, 0, -1.67049, 0.355737, 0, -2.87961, 0.251511, 0, 2.16981, 0.5, 0, 1, -0.0651568, 0, 2.66717, -0.198145, 0.311383, 2.19602, 0.125756, 0.63757, 1.36243, 0.125756, 2.73117, 2.7172, 0.268059, 1.87832, -1.46682, 0.268059, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, 1.19209e-7, 0, -1.67049, -0.5, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.125755, 2.73117, 2.7172, 0.51957, 6.61669, 2.97823, -0.513461, 1.87832, -1.46682, 0.51957, 6.56954, 1.24407, -0.513461, 0, 1, 0.3, 0, -1.67049, 0.355737, 0, -2.87961, 0.251511, 0, 2.16981, 0.5],
-  "indices": [2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 19, 1, 2, 19, 1, 2, 2, 16, 19, 2, 16, 19, 2, 3, 16, 2, 3, 16, 16, 3, 6, 16, 6, 17, 16, 3, 6, 16, 6, 17, 7, 18, 17, 7, 17, 6, 7, 18, 17, 7, 17, 6, 10, 11, 18, 10, 18, 7, 10, 11, 18, 10, 18, 7, 8, 11, 10, 8, 10, 7, 8, 11, 10, 8, 10, 7, 9, 8, 7, 9, 8, 7, 9, 7, 6, 9, 7, 6, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 4, 12, 3, 4, 12, 3, 5, 13, 4, 13, 12, 4, 5, 13, 4, 13, 12, 4, 15, 14, 12, 15, 12, 13, 15, 14, 12, 15, 12, 13, 14, 15, 5, 14, 15, 5, 5, 15, 13, 5, 15, 13, 20, 21, 22, 29, 20, 23, 23, 20, 22, 20, 21, 22, 29, 20, 23, 23, 20, 22, 22, 21, 39, 22, 21, 39, 36, 23, 22, 39, 36, 22, 36, 23, 22, 39, 36, 22, 37, 23, 36, 37, 23, 36, 26, 37, 38, 37, 26, 23, 26, 37, 38, 37, 26, 23, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 27, 38, 30, 27, 30, 28, 27, 38, 30, 27, 30, 28, 38, 31, 30, 38, 31, 30, 30, 31, 28, 30, 31, 28, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 24, 33, 35, 24, 32, 33, 24, 33, 35, 24, 32, 33, 23, 32, 24, 23, 32, 24, 23, 24, 25, 23, 24, 25, 24, 35, 25, 24, 35, 25]
-}, {
-  "vertices": [0, 1, -0.18593, 0, 2.66717, -0.318919, -0.311383, 2.19602, 0.00498234, -0.63757, 1.36243, 0.125756, -2.13574, 2.71753, 0.924384, -1.27253, -1.44252, 0.497551, -0.891271, -1.67049, 0.125756, -2.88463, -2.81215, 0.125755, 0, -3.5, -0.120773, 0, -1.67049, -0.620773, -1.59801, -4.78739, 0.125755, 0, -5.27165, 0.00498211, -2.13066, 2.69291, 1.17464, -5.74559, 1.12196, 4.29641, -1.26745, -1.46715, 0.747802, -5.69843, -0.612202, 4.29641, 0, 1, 0.179227, 0, -1.67049, 0.234964, 0, -2.87961, 0.130738, 0, 2.16981, 0.379227, 0, 1, -0.18593, 0, 2.66717, -0.318919, 0.311383, 2.19602, 0.00498234, 0.63757, 1.36243, 0.125756, 2.13574, 2.71753, 0.924384, 1.27253, -1.44252, 0.497551, 0.891271, -1.67049, 0.125756, 2.88463, -2.81215, 0.125755, 0, -3.5, -0.120773, 0, -1.67049, -0.620773, 1.59801, -4.78739, 0.125755, 0, -5.27165, 0.00498211, 2.13066, 2.69291, 1.17464, 5.74559, 1.12196, 4.29641, 1.26745, -1.46715, 0.747802, 5.69843, -0.612202, 4.29641, 0, 1, 0.179227, 0, -1.67049, 0.234964, 0, -2.87961, 0.130738, 0, 2.16981, 0.379227],
-  "indices": [2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 2, 1, 0, 6, 3, 0, 6, 0, 9, 2, 0, 3, 19, 1, 2, 19, 1, 2, 2, 16, 19, 2, 16, 19, 2, 3, 16, 2, 3, 16, 16, 3, 6, 16, 6, 17, 16, 3, 6, 16, 6, 17, 7, 18, 17, 7, 17, 6, 7, 18, 17, 7, 17, 6, 10, 11, 18, 10, 18, 7, 10, 11, 18, 10, 18, 7, 8, 11, 10, 8, 10, 7, 8, 11, 10, 8, 10, 7, 9, 8, 7, 9, 8, 7, 9, 7, 6, 9, 7, 6, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 6, 5, 4, 6, 4, 3, 14, 5, 6, 12, 14, 6, 12, 6, 3, 4, 12, 3, 4, 12, 3, 5, 13, 4, 13, 12, 4, 5, 13, 4, 13, 12, 4, 15, 14, 12, 15, 12, 13, 15, 14, 12, 15, 12, 13, 14, 15, 5, 14, 15, 5, 5, 15, 13, 5, 15, 13, 20, 21, 22, 29, 20, 23, 23, 20, 22, 20, 21, 22, 29, 20, 23, 23, 20, 22, 22, 21, 39, 22, 21, 39, 36, 23, 22, 39, 36, 22, 36, 23, 22, 39, 36, 22, 37, 23, 36, 37, 23, 36, 26, 37, 38, 37, 26, 23, 26, 37, 38, 37, 26, 23, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 23, 25, 26, 26, 27, 28, 26, 28, 29, 26, 38, 27, 29, 23, 26, 26, 25, 34, 23, 26, 34, 27, 38, 30, 27, 30, 28, 27, 38, 30, 27, 30, 28, 38, 31, 30, 38, 31, 30, 30, 31, 28, 30, 31, 28, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 33, 32, 34, 33, 34, 35, 23, 34, 32, 25, 35, 34, 24, 33, 35, 24, 32, 33, 24, 33, 35, 24, 32, 33, 23, 32, 24, 23, 32, 24, 23, 24, 25, 23, 24, 25, 24, 35, 25, 24, 35, 25]
-}];
-
-class VecTween extends Tween {
-  action() {
-    const _from = [];
-    lerp(_from, this.from, this.to, this.current_step);
-    this.object[this.property] = _from;
-  }
-
-  pre_start() {
-    super.pre_start();
-    this.from = this.object[this.property].slice();
-  }
-}
-
 const tween_time = 4; // <- seconds
+const bird_model = bird_model_vertices.map(v => ({
+  vertices: v,
+  indices: bird_model_indices
+}));
 function spawn_birds(position$$1, color, radius, qty, game) {
   play_bird_sound(position$$1);
   for (let i = 0; i < qty; i++) {
@@ -4522,6 +4543,7 @@ function spawn_birds(position$$1, color, radius, qty, game) {
       bird.get_component(Morph).frames = bird_model;
       bird.get_component(Transform).look_at(target_position);
       bird.get_component(Transform).rotate_ud(Math.PI/2);
+      bird.get_component(Transform).rotate_rl(Math.PI);
       bird.get_component(Morph).create_buffers();
       game.add(bird);
 
@@ -4538,11 +4560,12 @@ function spawn_birds(position$$1, color, radius, qty, game) {
   }
 }
 
+const DEBUG = false;
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
-const BIRD_TRIGGER_DISTANCE = 20;
+const BIRD_TRIGGER_DISTANCE = 25;
 const BIRD_FLOCK_SIZE = 25;
 
 let props = [];
@@ -4554,7 +4577,7 @@ function hex(hue, lum) {
 }
 
 function create_level(lvl_number) {
-  set_seed(base_seed * lvl_number);
+  set_seed(Math.pow(base_seed / lvl_number, 2));
   props = [];
   birds_positions = [];
   const game = new Game({
@@ -4598,18 +4621,26 @@ function create_level(lvl_number) {
     look_at_target(game.camera.get_component(Transform).matrix)
   );
 
+  if (!DEBUG) {
+    delete game.camera.get_component(Move).dir_desc['69'];
+    delete game.camera.get_component(Move).dir_desc['81'];
+  }
+
+  // game.camera.get_component(Move).dir_desc['81'] = 'l';
+  // game.camera.get_component(Move).dir_desc['90'] = 'f';
+
   const spawners = integer(2, 4);
   for (let i = 0; i < spawners; i++) {
-    const birds_position = position([0, 0], WORLD_SIZE/3, 0);
+    const birds_position = position([0, 0], WORLD_SIZE/3, -3);
     birds_positions.push(birds_position);
 
-    // XXX: Uncomment here to see birds' spawning points
-
-    // const bird_spawner = element(1, color, 3)[0];
-    // bird_spawner.get_component(Transform).set({
-    //   position: birds_position
-    // });
-    // game.add(bird_spawner);
+    if (DEBUG) {
+      const bird_spawner = element(1, color, 3)[0];
+      bird_spawner.get_component(Transform).set({
+        position: birds_position
+      });
+      game.add(bird_spawner);
+    }
   }
 
 
@@ -4620,7 +4651,7 @@ function create_level(lvl_number) {
       position: game.camera.get_component(Transform).position,
       rotation: game.camera.get_component(Transform).rotation,
     };
-    window.dispatch('SNAPSHOT_TAKEN', target);
+    window['dispatch'](ACTIONS.SAVE_SNAPSHOT, target);
     game.stop();
   });
 
@@ -4636,7 +4667,6 @@ function start_level(game, hue, target) {
   game.camera.get_component(Move).keyboard_controlled = true;
   game.camera.get_component(Move).mouse_controlled = true;
   game.camera.add_component(new DummyLookAt({target}));
-  game.camera.add_component(new Footsteps());
 
   for (const entity of game.entities) {
     entity.get_component(Render).color = "#000000";
@@ -4660,7 +4690,7 @@ function start_level(game, hue, target) {
     }
   });
 
-  game.on("afterrender", function hint() {
+  game.on("afterrender", function () {
     const hint = get_hint(target, game.camera, WORLD_SIZE);
     // XXX Change color on the material instance?
     for (const entity of game.entities) {
@@ -4671,159 +4701,274 @@ function start_level(game, hue, target) {
 
 function end_level(game, target) {
   game.stop();
-  return get_score(target, game.camera, WORLD_SIZE);
+  const score = get_score(target, game.camera, WORLD_SIZE);
+  return Math.floor(score * 100);
 }
 
-const init = {
-  scene: "SCENE_TITLE",
+const MAX_IDLE = 5000;
+let last_active = {};
+let idle_check;
+
+function reset_idle(event) {
+  last_active[event.type] = performance.now();
+}
+
+function detect_idle() {
+  clear_idle();
+  for (const type of ["mousemove", "keydown"]) {
+    if (last_active[type] + MAX_IDLE < performance.now()) {
+      window.dispatch(ACTIONS.WARN_IDLE, type);
+      break;
+    }
+  }
+}
+
+function setup_idle() {
+  window.addEventListener("mousemove", reset_idle);
+  window.addEventListener("keydown", reset_idle);
+  idle_check = setTimeout(detect_idle, 5000);
+
+  const now = performance.now();
+  last_active = {mousemove: now, keydown: now};
+}
+
+function clear_idle() {
+  window.removeEventListener("mousemove", reset_idle);
+  window.removeEventListener("keydown", reset_idle);
+  clearTimeout(idle_check);
+}
+
+const init$1 = {
   level: null,
   hue: 0,
   target: null,
   results: [],
+  idle_reason: null
 };
 
-function merge(...objs) {
-  return Object.assign({}, ...objs);
-}
-
-function reducer(state = init, action, args) {
+function reducer$1(state = init$1, action, args) {
   switch (action) {
-    case "INIT": {
+    case ACTIONS.INIT: {
       play_music();
-      return merge(state, {
-        scene: "SCENE_TITLE",
-      });
+      const saved_results = localStorage.getItem("results");
+      const results = saved_results
+        ? saved_results.split(" ").map(x => parseInt(x))
+        : [];
+      return merge(state, { results });
     }
-    case "PLAY_LEVEL": {
+    case SCENES.FIND: {
       const [index] = args;
       const [level, hue] = create_level(index + 1);
-      return merge(state, {
-        scene: "SCENE_FIND",
-        level,
-        index,
-        hue
-      });
+      return merge(state, { index, level, hue });
     }
-    case "SNAPSHOT_TAKEN": {
+    case ACTIONS.SAVE_SNAPSHOT: {
       const [target] = args;
       return merge(state, { target });
     }
-    case "START_LEVEL": {
+    case SCENES.PLAY: {
       const { level, hue, target } = state;
       // level.canvas.requestPointerLock();
       start_level(level, hue, target);
-      return merge(state, {
-        scene: "SCENE_PLAY",
-      });
+      setup_idle();
+      return merge(state, { idle_reason: null });
     }
-    case "VALIDATE_SNAPSHOT": {
+    case ACTIONS.WARN_IDLE: {
+      const [idle_reason] = args;
+      return merge(state, { idle_reason });
+    }
+    case ACTIONS.VALIDATE_SNAPSHOT: {
       const { level, index, target, results } = state;
       const score = end_level(level, target);
-      return merge(state, {
-        scene: "SCENE_SCORE",
-        results: [
-            ...results.slice(0, index),
-            score,
-            ...results.slice(index + 1)
-        ]
-      });
+      const new_results = [
+        ...results.slice(0, index),
+        score,
+        ...results.slice(index + 1)
+      ];
+
+      clear_idle();
+      localStorage.setItem("results", new_results.join(" "));
+      return merge(state, { results: new_results });
     }
-    case "PLAY_AGAIN":
-      return merge(state, {
-        scene: "SCENE_LEVELS",
-        level: null
-      });
+    case SCENES.LEVELS:
+      return merge(state, { level: null });
     default:
-      return state;
+      return Object.assign({}, init$1, state);
   }
 }
 
-const { attach, connect, dispatch } =
-  create_store(logger(reducer));
+// import with_logger from "innerself/logger";
+function chain(...reducers) {
+  // return reducers.reduce(
+  //   (acc, reducer) => (state, ...rest) => reducer(acc(state, ...rest), ...rest)
+  //   state => state
+  // );
+  return function(state, action, args) {
+    return reducers.reduce(
+      (acc, reducer) => reducer(acc, action, args), state
+    );
+  }
+}
 
-dispatch("INIT");
-window.dispatch = dispatch;
+const reducer = chain(navigation, reducer$1);
+// const reducer = with_logger(chain(navigation_reducer, game_reducer));
+const { attach, connect, dispatch } =
+  create_store(reducer);
+
+// Closure compiler's shit
+window['dispatch'] = dispatch;
+window['goto'] = (...args) => dispatch("T0", ...args);
+dispatch(ACTIONS.INIT);
+
+function Scene({next_scene}, {id, from, to, flash = false}, ...children) {
+  return html`
+    ${children}
+    ${next_scene !== null ? (next_scene === id
+      ? `<div class="ui fadeout ${from}"></div>`
+      : `<div class="ui ${flash ? "flash" : "fadein"} ${to}"></div>`
+    ) : null}`;
+}
+
+var Scene$1 = connect(Scene);
 
 function TitleScreen() {
-  return html`
-    <div class="ui action"
-      onclick="dispatch('PLAY_LEVEL', 0)">
-      <div>A moment lost in time.</div>
-    </div>
-  `;
+  return Scene$1(
+    {id: SCENES.TITLE, from: "black", to: "black"},
+    html`
+      <div class="ui action"
+        onclick="goto(${SCENES.INTRO})">
+        <div class="pad" style="margin: 1.3rem 0 1rem;">A moment lost in time.</div>
+        <div style="font-size: 0.3rem; animation: fadein 1s 3s both">
+          A story by <a href="https://piesku.com">piesku.com</a>.</div>
+      </div>`
+  );
 }
 
-function LevelScore(score, idx) {
-  const percent = Math.floor(score * 100);
-  return html`
-     <div class="box action"
-       onclick="dispatch('PLAY_LEVEL', ${idx})"
-       style="padding: .5rem">
-       ${percent}</div>
-  `;
+function IntroScreen({results}) {
+  const onclick = results.length
+    ? `goto(${SCENES.LEVELS})`
+    : `goto(${SCENES.FIND}, 0)`;
+
+  return Scene$1(
+    {id: SCENES.INTRO, from: "black", to: "black"},
+    html`
+      <div class="ui action" onclick="${onclick}">
+        <div class="pad" style="font-style: italic;">
+          All those moments will be lost in time, like tears in rain.
+        </div>
+        <div class="pad">
+          Collect your memories before they vanish.
+        </div>
+      </div>`
+  );
 }
 
-function LevelSelect({results}) {
-  return html`
-    <div class="ui"
-      style="background-color: #000">
-      <div style="
-        display: flex;
-        flex-wrap: wrap;
-        max-width: 1280px;
-        max-height: 720px">
-      ${results.map(LevelScore)}
-      <div class="action"
-        style="padding: .5rem; color: #999;"
-        onclick="dispatch('PLAY_LEVEL', ${results.length})">next</div>
-      </div>
-    </div>
-  `;
+var IntroScreen$1 = connect(IntroScreen);
+
+function FindScreen({next_scene, hue}) {
+  const style = next_scene === SCENES.PLAY
+    ? null
+    : `background: hsl(${hue * 360}, 70%, 60%); `
+      + "animation: fadein 1s 1s forwards reverse";
+
+  return Scene$1(
+    {id: SCENES.FIND, from: "black", to: "white"},
+    html`
+      <div class="ui" style="${style}"></div>
+      <div class="ui action"
+        onclick="goto(${SCENES.PLAY})">
+        <div class="pad">Find this moment.</div>
+      </div>`
+  );
 }
 
-var LevelSelect$1 = connect(LevelSelect);
+var FindScreen$1 = connect(FindScreen);
 
-function FindScreen() {
-  return html`
-    <div class="ui action"
-      onclick="dispatch('START_LEVEL')">
-      <div>Find this moment.</div>
-    </div>
-  `;
+function PlayOverlay({idle_reason}) {
+  const message = idle_reason === "keydown"
+    ? "Walk with the WASD keys."
+    : "Move the mouse.";
+
+  return Scene$1(
+    {id: SCENES.PLAY, from: "white", to: "white", flash: true},
+    html`<div class="ui"
+      onclick="dispatch(${ACTIONS.VALIDATE_SNAPSHOT}); goto(${SCENES.SCORE})">
+        ${ idle_reason &&
+          `<div style="opacity: 0; animation: fadein 2s 1s alternate 2;">${message}</div>`
+        }</div>`
+  );
 }
+
+var PlayOverlay$1 = connect(PlayOverlay);
 
 function ScoreScreen({results, index, target}) {
-  const score = Math.floor(results[index] * 100);
-  return html`
-    <img class="ui"
-      style="opacity: .5"
-      src="${target.snapshot}">
-    <div class="ui action"
-      onclick="dispatch('PLAY_AGAIN')">
-      <div>${score}/100</div>
-    </div>
-  `;
+  const score = results[index];
+  const message = score < 15
+    ? "Doesn't look like it."
+    : score < 35
+    ? "It was something else."
+    : score < 50
+    ? "It's not quite the same."
+    : score < 75
+    ? "Could it be?"
+    : score < 85
+    ? "It reminds you of something."
+    : score < 95
+    ? "That's it, almost there."
+    : "Wonderful. You've found it.";
+
+  return Scene$1(
+    {id: SCENES.SCORE, from: "white", to: "black"},
+    html`
+      <img class="ui"
+        style="opacity: .5"
+        src="${target.snapshot}">
+      <div class="ui action"
+        onclick="goto(${SCENES.LEVELS})">
+        <div class="pad" style="margin: 1.5rem 0 1rem;">${message}</div>
+        <div>${results[index]}</div>
+      </div>`
+  );
 }
 
 var ScoreScreen$1 = connect(ScoreScreen);
 
-function PlayOverlay() {
+function LevelScore(score, idx) {
   return html`
-    <div class="ui"
-      onclick="dispatch('VALIDATE_SNAPSHOT')"></div>
+     <div class="box action"
+       onclick="goto(${SCENES.FIND}, ${idx})"
+       style="padding: .5rem; color: #666;">
+       ${score}</div>
   `;
 }
 
-const scenes = {
-  "SCENE_TITLE": TitleScreen,
-  "SCENE_LEVELS": LevelSelect$1,
-  "SCENE_FIND": FindScreen,
-  "SCENE_SCORE": ScoreScreen$1,
-  "SCENE_PLAY": PlayOverlay,
-};
+function LevelSelect({results}) {
+  return Scene$1(
+    {id: SCENES.LEVELS, from: "black", to: "black"},
+    html`
+      <div class="ui black">
+        <div class="pad">
+          ${results.map(LevelScore)}
+          <div class="action"
+            style="padding: .5rem;"
+            onclick="goto(${SCENES.FIND}, ${results.length})">next</div>
+        </div>
+      </div>`
+  );
+}
 
-function App({scene}) {
-  const component = scenes[scene];
+var LevelSelect$1 = connect(LevelSelect);
+
+const scenes = [
+  TitleScreen,
+  IntroScreen$1,
+  FindScreen$1,
+  PlayOverlay$1,
+  ScoreScreen$1,
+  LevelSelect$1,
+];
+
+function App({current_scene}) {
+  const component = scenes[current_scene];
   return component ? component() : "";
 }
 
