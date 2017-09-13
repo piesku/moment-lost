@@ -236,7 +236,7 @@ function bird_sound(position, time) {
   am_gain_env.attack_time = max_attack_decay_time * bird_sound_params.atka2;
   am_gain_env.decay_time = max_attack_decay_time * bird_sound_params.dcya2;
 
-  main_gain.gain.value = 10;
+  main_gain.gain.value = 0;
   carrier_osc.start(0);
   mod_osc.start(0);
   am_osc.start(0);
