@@ -13,7 +13,7 @@ import { DummyLookAt, get_score, get_hint } from "./score";
 import { distance } from "gl-matrix/src/gl-matrix/vec3";
 import { spawn_birds } from "./bird";
 
-const DEBUG = true;
+const DEBUG = false;
 const WORLD_SIZE = 1000;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
