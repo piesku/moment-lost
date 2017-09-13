@@ -1,4 +1,4 @@
-import { create_store } from "innerself";
+import { createStore } from "innerself";
 // import with_logger from "innerself/logger";
 import { ACTIONS } from "./actions";
 import navigation_reducer from "./reducer-navi";
@@ -19,7 +19,7 @@ function chain(...reducers) {
 const reducer = chain(navigation_reducer, game_reducer);
 // const reducer = with_logger(chain(navigation_reducer, game_reducer));
 const { attach, connect, dispatch } =
-  create_store(reducer);
+  createStore(reducer);
 
 // Closure compiler's shit
 window['dispatch'] = dispatch;
