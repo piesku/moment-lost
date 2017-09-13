@@ -16,7 +16,7 @@ function detect_idle() {
   }
 }
 
-export function setup_idle(reason) {
+export function setup_idle() {
   window.addEventListener("mousemove", reset_idle);
   window.addEventListener("keydown", reset_idle);
   idle_check = setTimeout(detect_idle, 5000);
@@ -25,7 +25,7 @@ export function setup_idle(reason) {
   last_active = {mousemove: now, keydown: now};
 }
 
-export function clear_idle(reason) {
+export function clear_idle() {
   window.removeEventListener("mousemove", reset_idle);
   window.removeEventListener("keydown", reset_idle);
   clearTimeout(idle_check);
