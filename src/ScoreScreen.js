@@ -1,5 +1,6 @@
 import html from "innerself";
 import Scene from "./Scene";
+import { SCENES } from "./actions"
 import { connect } from "./store";
 
 function ScoreScreen({results, index, target}) {
@@ -19,13 +20,13 @@ function ScoreScreen({results, index, target}) {
     : "Wonderful. You've found it.";
 
   return Scene(
-    {name: "SCENE_SCORE", from: "white", to: "black"},
+    {id: SCENES.SCORE, from: "white", to: "black"},
     html`
       <img class="ui"
         style="opacity: .5"
         src="${target.snapshot}">
       <div class="ui action"
-        onclick="goto('SCENE_LEVELS')">
+        onclick="goto(${SCENES.LEVELS})">
         <div class="pad" style="margin: 1.5rem 0 1rem;">${message}</div>
         <div>${results[index]}</div>
       </div>`

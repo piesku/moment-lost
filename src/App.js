@@ -7,14 +7,14 @@ import PlayOverlay from "./PlayOverlay";
 import ScoreScreen from "./ScoreScreen";
 import LevelSelect from "./LevelSelect";
 
-const scenes = {
-  "SCENE_TITLE": TitleScreen,
-  "SCENE_INTRO": IntroScreen,
-  "SCENE_FIND": FindScreen,
-  "SCENE_PLAY": PlayOverlay,
-  "SCENE_SCORE": ScoreScreen,
-  "SCENE_LEVELS": LevelSelect,
-};
+const scenes = [
+  TitleScreen,
+  IntroScreen,
+  FindScreen,
+  PlayOverlay,
+  ScoreScreen,
+  LevelSelect,
+];
 
 function App({current_scene}) {
   const component = scenes[current_scene];

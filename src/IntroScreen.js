@@ -1,14 +1,15 @@
 import html from "innerself";
 import Scene from "./Scene";
+import { SCENES } from "./actions"
 import { connect } from "./store";
 
 function IntroScreen({results}) {
   const onclick = results.length
-    ? "goto('SCENE_LEVELS')"
-    : "goto('SCENE_FIND', 0)";
+    ? `goto(${SCENES.LEVELS})`
+    : `goto(${SCENES.FIND}, 0)`;
 
   return Scene(
-    {name: "SCENE_INTRO", from: "black", to: "black"},
+    {id: SCENES.INTRO, from: "black", to: "black"},
     html`
       <div class="ui action" onclick="${onclick}">
         <div class="pad" style="font-style: italic;">

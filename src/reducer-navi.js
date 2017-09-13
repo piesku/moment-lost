@@ -1,32 +1,33 @@
+import { SCENES, ACTIONS } from "./actions";
 import { merge } from "./util";
 
 const init = {
-  current_scene: "SCENE_TITLE",
-  next_scene: "SCENE_TITLE",
+  current_scene: SCENES.TITLE,
+  next_scene: SCENES.TITLE,
 }
 
 export default function navigation(state = init, action, args) {
   switch (action) {
-    case "TRANSITION": {
+    case "T0": {
       const [next_scene, ...rest] = args;
 
-      setTimeout(window['dispatch'], 1000, "GOTO_" + next_scene, ...rest)
-      setTimeout(window['dispatch'], 2000, "TRANSITIONED");
+      setTimeout(window['dispatch'], 1000, next_scene, ...rest)
+      setTimeout(window['dispatch'], 2000, "T1");
 
       return merge(state, { next_scene });
     }
-    case "TRANSITIONED": {
+    case "T1": {
       return merge(state, { next_scene: null });
     }
-    case "INIT": {
-      setTimeout(window['dispatch'], 1000, "TRANSITIONED");
+    case ACTIONS.INIT: {
+      setTimeout(window['dispatch'], 1000, "T1");
       return state;
     }
-    case "GOTO_SCENE_INTRO":
-    case "GOTO_SCENE_FIND":
-    case "GOTO_SCENE_PLAY":
-    case "GOTO_SCENE_SCORE":
-    case "GOTO_SCENE_LEVELS": {
+    case SCENES.INTRO:
+    case SCENES.FIND:
+    case SCENES.PLAY:
+    case SCENES.SCORE:
+    case SCENES.LEVELS: {
       const { next_scene } = state;
       return merge(state, { current_scene: next_scene });
     }

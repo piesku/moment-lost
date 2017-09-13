@@ -1,13 +1,13 @@
 import html from "innerself";
 import { connect } from "./store";
 
-function Scene({next_scene}, {name, from, to}, ...children) {
+function Scene({next_scene}, {id, from, to}, ...children) {
   return html`
     ${children}
-    ${next_scene && (next_scene === name
+    ${next_scene !== null ? (next_scene === id
       ? `<div class="ui fadeout ${from}"></div>`
       : `<div class="ui fadein ${to}"></div>`
-    )}`;
+    ) : null}`;
 }
 
 export default connect(Scene);

@@ -1,6 +1,7 @@
 import { create_level, start_level, end_level } from "./game";
 import { play_music } from "./audio";
 import { setup_idle, clear_idle } from "./idle";
+import { SCENES, ACTIONS } from "./actions";
 import { merge } from "./util";
 
 const init = {
@@ -13,7 +14,7 @@ const init = {
 
 export default function reducer(state = init, action, args) {
   switch (action) {
-    case "INIT": {
+    case ACTIONS.INIT: {
       play_music();
       const saved_results = localStorage.getItem("results");
       const results = saved_results
@@ -21,27 +22,27 @@ export default function reducer(state = init, action, args) {
         : [];
       return merge(state, { results });
     }
-    case "GOTO_SCENE_FIND": {
+    case SCENES.FIND: {
       const [index] = args;
       const [level, hue] = create_level(index + 1);
       return merge(state, { index, level, hue });
     }
-    case "SNAPSHOT_TAKEN": {
+    case ACTIONS.SAVE_SNAPSHOT: {
       const [target] = args;
       return merge(state, { target });
     }
-    case "GOTO_SCENE_PLAY": {
+    case SCENES.PLAY: {
       const { level, hue, target } = state;
       // level.canvas.requestPointerLock();
       start_level(level, hue, target);
       setup_idle();
       return merge(state, { idle_reason: null });
     }
-    case "WARN_IDLE": {
+    case ACTIONS.WARN_IDLE: {
       const [idle_reason] = args;
       return merge(state, { idle_reason });
     }
-    case "TAKE_SNAPSHOT": {
+    case ACTIONS.VALIDATE_SNAPSHOT: {
       const { level, index, target, results } = state;
       const score = end_level(level, target);
       const new_results = [
@@ -54,7 +55,7 @@ export default function reducer(state = init, action, args) {
       localStorage.setItem("results", new_results.join(" "));
       return merge(state, { results: new_results });
     }
-    case "GOTO_SCENE_LEVELS":
+    case SCENES.LEVELS:
       return merge(state, { level: null });
     default:
       return Object.assign({}, init, state);
