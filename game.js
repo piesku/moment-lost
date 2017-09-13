@@ -8,10 +8,15 @@ function html([first, ...strings], ...values) {
     return values.reduce(
         (acc, cur) => acc.concat(cur, strings.shift()),
         [first]
-    ).join("");
+    )
+
+    // Filter out interpolations which are null or undefined.  null is
+    // loosely-equal only to undefined and itself.
+    .filter(value => value != null)
+    .join("");
 }
 
-function create_store(reducer) {
+function createStore(reducer) {
     let state = reducer();
     const roots = new Map();
     const prevs = new Map();
@@ -27,23 +32,30 @@ function create_store(reducer) {
             if (output !== prevs.get(root)) {
                 prevs.set(root, output);
                 root.innerHTML = output;
+
+                // Dispatch an event on the root to give developers a chance to
+                // do some housekeeping after the whole DOM is replaced under
+                // the root. You can re-focus elements in the listener to this
+                // event. See example03.
+                const event = new CustomEvent("render", { detail: state });
+                root.dispatchEvent(event);
             }
         }
     }
 
     return {
-      attach(component, root) {
-        roots.set(root, component);
-        render();
-      },
-      connect(component) {
-          // Return a decorated component function.
-          return (...args) => component(state, ...args);
-      },
-      dispatch(action, ...args) {
-        state = reducer(state, action, args);
-        render();
-      },
+        attach(component, root) {
+            roots.set(root, component);
+            render();
+        },
+        connect(component) {
+            // Return a decorated component function.
+            return (...args) => component(state, ...args);
+        },
+        dispatch(action, ...args) {
+            state = reducer(state, action, args);
+            render();
+        },
     };
 }
 
@@ -4805,7 +4817,7 @@ function reducer$1(state = init$1, action, args) {
       return Object.assign({}, init$1, state);
   }
 
-  function oncanvasclick(event) {
+  function oncanvasclick() {
     window.dispatch(ACTIONS.VALIDATE_SNAPSHOT);
     window.goto(SCENES.SCORE);
   }
@@ -4827,7 +4839,7 @@ function chain(...reducers) {
 const reducer = chain(navigation, reducer$1);
 // const reducer = with_logger(chain(navigation_reducer, game_reducer));
 const { attach, connect, dispatch } =
-  create_store(reducer);
+  createStore(reducer);
 
 // Closure compiler's shit
 window['dispatch'] = dispatch;
@@ -4957,7 +4969,7 @@ function LevelScore(score, idx) {
 }
 
 function LevelSelect({results}) {
-  const total = results.reduce((acc, cur) => acc + cur);
+  const total = results.reduce((acc, cur) => acc + cur, 0);
   const average = Math.floor(total / results.length);
   // An inverted hyperbola with lim(x → ∞) = 1.
   const threshold = 100 * (1 - 2.5 / results.length);
