@@ -1,6 +1,6 @@
 import { create_level, start_level, end_level } from "./game";
 import { play_music } from "./audio";
-import { detect_idle, reset_idle } from "./idle";
+import { setup_idle, clear_idle } from "./idle";
 import { merge } from "./util";
 
 const init = {
@@ -8,8 +8,7 @@ const init = {
   hue: 0,
   target: null,
   results: [],
-  idle_check: null,
-  last_reason: ""
+  idle_reason: null
 };
 
 export default function reducer(state = init, action, args) {
@@ -35,19 +34,15 @@ export default function reducer(state = init, action, args) {
       const { level, hue, target } = state;
       // level.canvas.requestPointerLock();
       start_level(level, hue, target);
-      reset_idle();
-      return merge(state, {
-        idle_check: setInterval(detect_idle, 1000)
-      });
+      setup_idle();
+      return merge(state, { idle_reason: null });
     }
     case "WARN_IDLE": {
-      const { idle_check } = state;
-      const [last_reason] = args;
-      clearInterval(idle_check);
-      return merge(state, { last_reason, idle_check: null });
+      const [idle_reason] = args;
+      return merge(state, { idle_reason });
     }
     case "TAKE_SNAPSHOT": {
-      const { level, index, target, results, idle_check } = state;
+      const { level, index, target, results } = state;
       const score = end_level(level, target);
       const new_results = [
         ...results.slice(0, index),
@@ -55,9 +50,9 @@ export default function reducer(state = init, action, args) {
         ...results.slice(index + 1)
       ];
 
-      clearInterval(idle_check);
+      clear_idle();
       localStorage.setItem("results", new_results.join(" "));
-      return merge(state, { results: new_results, idle_check: null });
+      return merge(state, { results: new_results });
     }
     case "GOTO_SCENE_LEVELS":
       return merge(state, { level: null });
