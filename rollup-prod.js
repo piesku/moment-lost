@@ -1,5 +1,5 @@
 import resolve from 'rollup-plugin-node-resolve';
-import closure from 'rollup-plugin-closure-compiler-js';
+import minify from 'rollup-plugin-babel-minify';
 
 export default {
   input: './src/index.js',
@@ -9,6 +9,6 @@ export default {
   },
   plugins: [
     resolve(),
-    closure(),
+    minify({ comments: false }),
   ],
 };
