@@ -15,6 +15,9 @@ function IntroScreen({results}) {
         <div class="pad" style="font-style: italic;">
           All those moments will be lost in time, like tears in rain.
         </div>
+        <div class="pad">
+          Collect your memories before they vanish.
+        </div>
       </div>`
   );
 }
