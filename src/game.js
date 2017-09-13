@@ -79,6 +79,9 @@ export function create_level(lvl_number) {
     delete game.camera.get_component(Move).dir_desc['81'];
   }
 
+  game.camera.get_component(Move).dir_desc['81'] = 'l';
+  game.camera.get_component(Move).dir_desc['90'] = 'f';
+
   const spawners = random.integer(2, 4);
   for (let i = 0; i < spawners; i++) {
     const birds_position = random.position([0, 0], WORLD_SIZE/3, -3);
