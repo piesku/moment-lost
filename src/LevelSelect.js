@@ -28,9 +28,8 @@ function LevelSelect({results}) {
             ? `<div class="action" style="padding: .5rem;"
                 onclick="goto(${SCENES.FIND}, ${results.length})">next</div>`
             : `<div class="action" style="padding: .5rem;"
-                title="Collect more accurate moments before advancing.">
-                …?
-               </div>`
+                onclick="goto(${SCENES.NOPASS})"
+                title="Collect more accurate moments before advancing.">…?</div>`
            }
         </div>
       </div>`

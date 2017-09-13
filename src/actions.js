@@ -5,6 +5,7 @@ export const SCENES = {
   PLAY: 3,
   SCORE: 4,
   LEVELS: 5,
+  NOPASS: 6,
 };
 
 export const ACTIONS = {

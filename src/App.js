@@ -6,6 +6,7 @@ import FindScreen from "./FindScreen";
 import PlayOverlay from "./PlayOverlay";
 import ScoreScreen from "./ScoreScreen";
 import LevelSelect from "./LevelSelect";
+import NoPassage from "./NoPassage";
 
 const scenes = [
   TitleScreen,
@@ -14,6 +15,7 @@ const scenes = [
   PlayOverlay,
   ScoreScreen,
   LevelSelect,
+  NoPassage,
 ];
 
 function App({current_scene}) {

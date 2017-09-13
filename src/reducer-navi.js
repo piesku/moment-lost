@@ -27,7 +27,8 @@ export default function navigation(state = init, action, args) {
     case SCENES.FIND:
     case SCENES.PLAY:
     case SCENES.SCORE:
-    case SCENES.LEVELS: {
+    case SCENES.LEVELS:
+    case SCENES.NOPASS: {
       const { next_scene } = state;
       return merge(state, { current_scene: next_scene });
     }
