@@ -82,29 +82,6 @@ export function play_music() {
   setTimeout(play_music, 2000 + integer(0, 10000));
 }
 
-export function play_footstep(freq = 50) {
-  const oscillator = context.createOscillator();
-  oscillator.frequency.value = freq;
-
-  const base = context.createOscillator();
-  base.frequency.value = freq - 20;
-
-  const envelope = context.createGain();
-  envelope.gain.value = 1.5;
-  envelope.gain.setTargetAtTime(0, context.currentTime + .005, 0.01);
-
-  base.connect(envelope);
-  oscillator.connect(envelope);
-  envelope.connect(context.destination);
-
-  base.start();
-  oscillator.start();
-
-  const end_time = context.currentTime + 0.1;
-  base.stop(end_time);
-  oscillator.stop(end_time);
-}
-
 function fm_synth(audio_context, carrier, modulator, mod_gain) {
   this.modulator_gain = audio_context.createGain();
   this.modulator_gain.gain.value = mod_gain || 300;
