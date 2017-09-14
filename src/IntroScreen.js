@@ -12,9 +12,6 @@ function IntroScreen({results}) {
     {id: SCENES.INTRO, from: "black", to: "black"},
     html`
       <div class="ui action" onclick="${onclick}">
-        <div class="pad" style="font-style: italic;">
-          All those moments will be lost in time, like tears in rain.
-        </div>
         <div class="pad">
           Collect your memories before they fade away.
         </div>
