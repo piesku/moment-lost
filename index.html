@@ -13,16 +13,11 @@
       padding: 0;
       margin: 0;
       overflow: hidden;
-      background: #000;
+      background: #111;
       font-family: Lato, Roboto, "Open Sans", "Helvetica Neue", Arial, sans-serif;
       font-weight: 200;
-      color: #fefefe;
+      color: rgba(255, 255, 255, 0.6);
       font-size: 64pt;
-    }
-
-    a {
-      color: #fff;
-      text-decoration: none;
     }
 
     .ui {
@@ -34,6 +29,10 @@
       justify-content: center;
       overflow-y: auto;
       z-index: 1;
+    }
+
+    .action {
+      cursor: pointer;
     }
 
     .pad {
@@ -57,21 +56,26 @@
     }
 
     .black {
-      background: #000;
+      background: #111;
     }
 
     .white {
       background: #fff;
     }
 
-    .action {
-      color: #eee;
-      cursor: pointer;
+    .box {
+      padding: .5rem;
       transition: color 1s;
     }
 
-    .action:hover {
-      color: #fff !important;
+    a {
+      color: inherit;
+      transition: color 1s;
+      text-decoration: none;
+    }
+
+    a:hover, .box:hover {
+      color: rgba(255, 255, 255, 0.8) !important;
     }
   </style>
 </head>

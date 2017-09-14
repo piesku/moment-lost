@@ -4879,9 +4879,6 @@ function IntroScreen({results}) {
     {id: SCENES.INTRO, from: "black", to: "black"},
     html`
       <div class="ui action" onclick="${onclick}">
-        <div class="pad" style="font-style: italic;">
-          All those moments will be lost in time, like tears in rain.
-        </div>
         <div class="pad">
           Collect your memories before they fade away.
         </div>
@@ -4963,7 +4960,7 @@ function LevelScore(score, idx) {
   return html`
      <div class="box action"
        onclick="goto(${SCENES.FIND}, ${idx})"
-       style="padding: .5rem; color: #666;">
+       style="color: rgba(255, 255, 255, 0.3);">
        ${score}</div>
   `;
 }
@@ -4981,9 +4978,9 @@ function LevelSelect({results}) {
         <div class="pad">
           ${results.map(LevelScore)}
           ${ average > threshold
-            ? `<div class="action" style="padding: .5rem;"
+            ? `<div class="box action"
                 onclick="goto(${SCENES.FIND}, ${results.length})">next</div>`
-            : `<div class="action" style="padding: .5rem;"
+            : `<div class="box action"
                 onclick="goto(${SCENES.NOPASS})"
                 title="Collect more accurate moments before advancing.">…?</div>`
            }
