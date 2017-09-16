@@ -7,7 +7,7 @@ function LevelScore(score, idx) {
   return html`
      <div class="box action"
        onclick="goto(${SCENES.FIND}, ${idx})"
-       style="color: rgba(255, 255, 255, 0.3);">
+       style="color: rgba(255, 255, 255, 0.35);">
        ${score}</div>
   `;
 }
