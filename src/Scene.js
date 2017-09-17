@@ -33,4 +33,5 @@ function Scene({next}, {id, from, to, duration_in, duration_out}, ...children) {
       : Fadeout(next, to, duration_out)}`;
 }
 
-export default connect(Scene);
+// Select only the "nav" part of the state.
+export default connect((state, ...args) => Scene(state.nav, ...args));

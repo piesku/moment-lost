@@ -2,7 +2,6 @@ import html from "innerself";
 import Scene from "./Scene";
 import { SCENE_FIND, SCENE_PLAY, TOGGLE_CLICKABLE, LOCK_POINTER }
   from "./actions"
-import { connect } from "./store";
 
 function FindScreenAnimating(hue) {
   return html`
@@ -24,11 +23,9 @@ function FindScreenClickable() {
     </div>`;
 }
 
-function FindScreen({hue, clickable}) {
+export default function FindScreen({hue, clickable}) {
   return Scene(
     {id: SCENE_FIND, from: "#000", to: "#fff"},
     clickable ? FindScreenClickable() : FindScreenAnimating(hue)
   );
 }
-
-export default connect(FindScreen);

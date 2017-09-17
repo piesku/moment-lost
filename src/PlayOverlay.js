@@ -1,9 +1,8 @@
 import html from "innerself";
 import Scene from "./Scene";
 import { SCENE_PLAY, SCENE_SCORE, VALIDATE_SNAPSHOT } from "./actions"
-import { connect } from "./store";
 
-function PlayOverlay({idle_reason}) {
+export default function PlayOverlay({idle_reason}) {
   const message = idle_reason === "keydown"
     ? "Walk with the WASD keys."
     : "Move the mouse.";
@@ -19,5 +18,3 @@ function PlayOverlay({idle_reason}) {
         }</div>`
   );
 }
-
-export default connect(PlayOverlay);

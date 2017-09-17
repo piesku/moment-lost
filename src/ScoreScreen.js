@@ -1,9 +1,8 @@
 import html from "innerself";
 import Scene from "./Scene";
 import { SCENE_SCORE, SCENE_LEVELS } from "./actions"
-import { connect } from "./store";
 
-function ScoreScreen({results, index, target}) {
+export default function ScoreScreen({results, index, target}) {
   const score = results[index];
   const message = score < 15
     ? "Doesn't look like it."
@@ -34,5 +33,3 @@ function ScoreScreen({results, index, target}) {
       </div>`
   );
 }
-
-export default connect(ScoreScreen);

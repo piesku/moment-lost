@@ -18,9 +18,9 @@ const scenes = [
   NoPassage,
 ];
 
-function App({current_scene}) {
+function App({game, nav: {current_scene}}) {
   const component = scenes[current_scene];
-  return component ? component() : "";
+  return component ? component(game) : "";
 }
 
 export default connect(App);
