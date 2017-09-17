@@ -9,7 +9,9 @@ function PlayOverlay({idle_reason}) {
     : "Move the mouse.";
 
   return Scene(
-    {id: SCENES.PLAY, from: "#fff", to: "#fff"},
+    // Simulate a flash of light with a .1s fadeout to white here and a 1.9s
+    // fadein in ScoreScreen.
+    {id: SCENES.PLAY, from: "#fff", to: "#fff", duration_out: .1},
     html`<div class="ui"
       onclick="dispatch(${ACTIONS.VALIDATE_SNAPSHOT}); goto(${SCENES.SCORE})">
         ${ idle_reason &&

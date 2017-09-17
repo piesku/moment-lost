@@ -20,7 +20,9 @@ function ScoreScreen({results, index, target}) {
     : "Wonderful. You've found it.";
 
   return Scene(
-    {id: SCENES.SCORE, from: "#fff", to: "#111"},
+    // Simulate a flash of light with a .1s fadeout to white in PlayOverlay and
+    // a 1.9s fadein here.
+    {id: SCENES.SCORE, from: "#fff", duration_in: 1.9, to: "#111"},
     html`
       <img class="ui"
         style="opacity: .5"
