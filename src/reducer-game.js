@@ -9,6 +9,7 @@ const init = {
   hue: 0,
   target: null,
   results: [],
+  clickable: true,
   idle_reason: null
 };
 
@@ -25,7 +26,11 @@ export default function reducer(state = init, action, args) {
     case SCENES.FIND: {
       const [index] = args;
       const [level, hue] = create_level(index + 1);
-      return merge(state, { index, level, hue });
+      return merge(state, { index, level, hue, clickable: false });
+    }
+    case ACTIONS.TOGGLE_CLICKABLE: {
+      const { clickable } = state;
+      return merge(state, { clickable: !clickable });
     }
     case ACTIONS.SAVE_SNAPSHOT: {
       const [target] = args;
