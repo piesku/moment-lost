@@ -59,57 +59,46 @@ function createStore(reducer) {
     };
 }
 
-const SCENES = {
-  TITLE: 0,
-  INTRO: 1,
-  FIND: 2,
-  PLAY: 3,
-  SCORE: 4,
-  LEVELS: 5,
-  NOPASS: 6,
-};
+const TRANSITION_START = 100;
+const TRANSITION_CHANGE_SCENE = 101;
+const TRANSITION_END = 102;
 
-const ACTIONS = {
-  INIT: 10,
-  SAVE_SNAPSHOT: 11,
-  WARN_IDLE: 12,
-  VALIDATE_SNAPSHOT: 13,
-  LOCK_POINTER: 14,
-};
+// These are 0-based to make routing in App easier.
+const SCENE_TITLE = 0;
+const SCENE_INTRO = 1;
+const SCENE_FIND = 2;
+const SCENE_PLAY = 3;
+const SCENE_SCORE = 4;
+const SCENE_LEVELS = 5;
+const SCENE_NOPASS = 6;
+
+const INIT = 10;
+const SAVE_SNAPSHOT = 11;
+const WARN_IDLE = 12;
+const VALIDATE_SNAPSHOT = 13;
+const LOCK_POINTER = 14;
+const TOGGLE_CLICKABLE = 15;
 
 function merge(...objs) {
   return Object.assign({}, ...objs);
 }
 
 const init = {
-  current_scene: SCENES.TITLE,
-  next_scene: SCENES.TITLE,
+  current_scene: SCENE_TITLE,
+  // An array of the next scene's name and optional args.
+  next: [SCENE_TITLE],
 };
 
 function navigation(state = init, action, args) {
   switch (action) {
-    case "T0": {
-      const [next_scene, ...rest] = args;
-
-      setTimeout(window['dispatch'], 1000, next_scene, ...rest);
-      setTimeout(window['dispatch'], 2000, "T1");
-
-      return merge(state, { next_scene });
+    case TRANSITION_START: {
+      return merge(state, { next: args  });
     }
-    case "T1": {
-      return merge(state, { next_scene: null });
+    case TRANSITION_END: {
+      return merge(state, { next: [null]});
     }
-    case ACTIONS.INIT: {
-      setTimeout(window['dispatch'], 1000, "T1");
-      return state;
-    }
-    case SCENES.INTRO:
-    case SCENES.FIND:
-    case SCENES.PLAY:
-    case SCENES.SCORE:
-    case SCENES.LEVELS:
-    case SCENES.NOPASS: {
-      const { next_scene } = state;
+    case TRANSITION_CHANGE_SCENE: {
+      const { next: [next_scene] } = state;
       return merge(state, { current_scene: next_scene });
     }
     default: {
@@ -4666,7 +4655,7 @@ function create_level(lvl_number) {
       position: game.camera.get_component(Transform).position,
       rotation: game.camera.get_component(Transform).rotation,
     };
-    window['dispatch'](ACTIONS.SAVE_SNAPSHOT, target);
+    dispatch(SAVE_SNAPSHOT, target);
     game.stop();
   });
 
@@ -4732,7 +4721,7 @@ function detect_idle() {
   clear_idle();
   for (const type of ["mousemove", "keydown"]) {
     if (last_active[type] + MAX_IDLE < performance.now()) {
-      window.dispatch(ACTIONS.WARN_IDLE, type);
+      dispatch(WARN_IDLE, type);
       break;
     }
   }
@@ -4758,12 +4747,13 @@ const init$1 = {
   hue: 0,
   target: null,
   results: [],
+  clickable: true,
   idle_reason: null
 };
 
 function reducer$1(state = init$1, action, args) {
   switch (action) {
-    case ACTIONS.INIT: {
+    case INIT: {
       play_music();
       const saved_results = localStorage.getItem("results");
       const results = saved_results
@@ -4771,32 +4761,36 @@ function reducer$1(state = init$1, action, args) {
         : [];
       return merge(state, { results });
     }
-    case SCENES.FIND: {
+    case SCENE_FIND: {
       const [index] = args;
       const [level, hue] = create_level(index + 1);
-      return merge(state, { index, level, hue });
+      return merge(state, { index, level, hue, clickable: false });
     }
-    case ACTIONS.SAVE_SNAPSHOT: {
+    case TOGGLE_CLICKABLE: {
+      const { clickable } = state;
+      return merge(state, { clickable: !clickable });
+    }
+    case SAVE_SNAPSHOT: {
       const [target] = args;
       return merge(state, { target });
     }
-    case ACTIONS.LOCK_POINTER: {
+    case LOCK_POINTER: {
       const { level } = state;
       level.canvas.requestPointerLock();
       return state;
     }
-    case SCENES.PLAY: {
+    case SCENE_PLAY: {
       const { level, hue, target } = state;
       start_level(level, hue, target);
       level.canvas.addEventListener("click", oncanvasclick);
       setup_idle();
       return merge(state, { idle_reason: null });
     }
-    case ACTIONS.WARN_IDLE: {
+    case WARN_IDLE: {
       const [idle_reason] = args;
       return merge(state, { idle_reason });
     }
-    case ACTIONS.VALIDATE_SNAPSHOT: {
+    case VALIDATE_SNAPSHOT: {
       const { level, index, target, results } = state;
       const score = end_level(level, target);
       const new_results = [
@@ -4811,15 +4805,15 @@ function reducer$1(state = init$1, action, args) {
       localStorage.setItem("results", new_results.join(" "));
       return merge(state, { results: new_results });
     }
-    case SCENES.LEVELS:
+    case SCENE_LEVELS:
       return merge(state, { level: null });
     default:
       return Object.assign({}, init$1, state);
   }
 
   function oncanvasclick() {
-    window.dispatch(ACTIONS.VALIDATE_SNAPSHOT);
-    window.goto(SCENES.SCORE);
+    dispatch(VALIDATE_SNAPSHOT);
+    goto(SCENE_SCORE);
   }
 }
 
@@ -4838,31 +4832,52 @@ function chain(...reducers) {
 
 const reducer = chain(navigation, reducer$1);
 // const reducer = with_logger(chain(navigation_reducer, game_reducer));
-const { attach, connect, dispatch } =
-  createStore(reducer);
+const { attach, connect, dispatch } = createStore(reducer);
+const goto = (...args) => dispatch(TRANSITION_START, ...args);
 
-// Closure compiler's shit
-window['dispatch'] = dispatch;
-window['goto'] = (...args) => dispatch("T0", ...args);
-dispatch(ACTIONS.INIT);
+window.dispatch = dispatch;
+window.goto = goto;
+dispatch(INIT);
 
-function Scene({next_scene}, {id, from, to, flash = false}, ...children) {
+function Fadein(from_color, duration = 1) {
+  return `<div class="ui"
+    onanimationend="dispatch(${TRANSITION_END})"
+    style="
+      background-color: ${from_color};
+      animation: fadein ${duration}s forwards reverse"></div>`;
+}
+
+function Fadeout(next, to_color, duration = 1) {
+  return `<div class="ui"
+    onanimationend="
+      dispatch(${TRANSITION_CHANGE_SCENE});
+      dispatch(${next.join(", ")})"
+    style="
+      background-color: ${to_color};
+      animation: fadein ${duration}s forwards"></div>`;
+}
+
+function Scene({next}, {id, from, to, duration_in, duration_out}, ...children) {
+  const [next_scene] = next;
+  if (next_scene === null) {
+    return children;
+  }
+
   return html`
     ${children}
-    ${next_scene !== null ? (next_scene === id
-      ? `<div class="ui fadeout ${from}"></div>`
-      : `<div class="ui ${flash ? "flash" : "fadein"} ${to}"></div>`
-    ) : null}`;
+    ${next_scene === id
+      ? Fadein(from, duration_in)
+      : Fadeout(next, to, duration_out)}`;
 }
 
 var Scene$1 = connect(Scene);
 
 function TitleScreen() {
   return Scene$1(
-    {id: SCENES.TITLE, from: "black", to: "black"},
+    {id: SCENE_TITLE, from: "#000", to: "#000"},
     html`
       <div class="ui action"
-        onclick="goto(${SCENES.INTRO})">
+        onclick="goto(${SCENE_INTRO})">
         <div class="pad" style="margin: 1.3rem 0 1rem;">A moment lost in time.</div>
         <div style="font-size: 0.3rem; animation: fadein 1s 3s both">
           A story by <a href="https://piesku.com">piesku.com</a>.</div>
@@ -4872,11 +4887,11 @@ function TitleScreen() {
 
 function IntroScreen({results}) {
   const onclick = results.length
-    ? `goto(${SCENES.LEVELS})`
-    : `goto(${SCENES.FIND}, 0)`;
+    ? `goto(${SCENE_LEVELS})`
+    : `goto(${SCENE_FIND}, 0)`;
 
   return Scene$1(
-    {id: SCENES.INTRO, from: "black", to: "black"},
+    {id: SCENE_INTRO, from: "#000", to: "#000"},
     html`
       <div class="ui action" onclick="${onclick}">
         <div class="pad">
@@ -4888,20 +4903,30 @@ function IntroScreen({results}) {
 
 var IntroScreen$1 = connect(IntroScreen);
 
-function FindScreen({next_scene, hue}) {
-  const style = next_scene === SCENES.PLAY
-    ? null
-    : `background: hsl(${hue * 360}, 70%, 60%); `
-      + "animation: fadein 1s 1s forwards reverse";
+function FindScreenAnimating(hue) {
+  return html`
+    <div class="ui"
+      onanimationend="dispatch(${TOGGLE_CLICKABLE})"
+      style="
+        background: hsl(${hue * 360}, 70%, 60%);
+        animation: fadein 1s 1s forwards reverse;"></div>
+    <div class="ui">
+      <div class="pad">Find this moment.</div>
+    </div>`;
+}
 
+function FindScreenClickable() {
+  return html`
+    <div class="ui action"
+      onclick="dispatch(${LOCK_POINTER}); goto(${SCENE_PLAY})">
+      <div class="pad">Find this moment.</div>
+    </div>`;
+}
+
+function FindScreen({hue, clickable}) {
   return Scene$1(
-    {id: SCENES.FIND, from: "black", to: "white"},
-    html`
-      <div class="ui" style="${style}"></div>
-      <div class="ui action"
-        onclick="dispatch(${ACTIONS.LOCK_POINTER}); goto(${SCENES.PLAY})">
-        <div class="pad">Find this moment.</div>
-      </div>`
+    {id: SCENE_FIND, from: "#000", to: "#fff"},
+    clickable ? FindScreenClickable() : FindScreenAnimating(hue)
   );
 }
 
@@ -4913,9 +4938,11 @@ function PlayOverlay({idle_reason}) {
     : "Move the mouse.";
 
   return Scene$1(
-    {id: SCENES.PLAY, from: "white", to: "white", flash: true},
+    // Simulate a flash of light with a .1s fadeout to white here and a 1.9s
+    // fadein in ScoreScreen.
+    {id: SCENE_PLAY, from: "#fff", to: "#fff", duration_out: .1},
     html`<div class="ui"
-      onclick="dispatch(${ACTIONS.VALIDATE_SNAPSHOT}); goto(${SCENES.SCORE})">
+      onclick="dispatch(${VALIDATE_SNAPSHOT}); goto(${SCENE_SCORE})">
         ${ idle_reason &&
           `<div style="opacity: 0; animation: fadein 2s 1s alternate 2;">${message}</div>`
         }</div>`
@@ -4941,13 +4968,15 @@ function ScoreScreen({results, index, target}) {
     : "Wonderful. You've found it.";
 
   return Scene$1(
-    {id: SCENES.SCORE, from: "white", to: "black"},
+    // Simulate a flash of light with a .1s fadeout to white in PlayOverlay and
+    // a 1.9s fadein here.
+    {id: SCENE_SCORE, from: "#fff", duration_in: 1.9, to: "#000"},
     html`
       <img class="ui"
         style="opacity: .5"
         src="${target.snapshot}">
       <div class="ui action"
-        onclick="goto(${SCENES.LEVELS})">
+        onclick="goto(${SCENE_LEVELS})">
         <div class="pad" style="margin: 1.5rem 0 1rem;">${message}</div>
         <div>${results[index]}</div>
       </div>`
@@ -4959,8 +4988,8 @@ var ScoreScreen$1 = connect(ScoreScreen);
 function LevelScore(score, idx) {
   return html`
      <div class="box action"
-       onclick="goto(${SCENES.FIND}, ${idx})"
-       style="color: rgba(255, 255, 255, 0.3);">
+       onclick="goto(${SCENE_FIND}, ${idx})"
+       style="color: rgba(255, 255, 255, 0.35);">
        ${score}</div>
   `;
 }
@@ -4972,16 +5001,16 @@ function LevelSelect({results}) {
   const threshold = 100 * (1 - 2.5 / results.length);
 
   return Scene$1(
-    {id: SCENES.LEVELS, from: "black", to: "black"},
+    {id: SCENE_LEVELS, from: "#000", to: "#000"},
     html`
-      <div class="ui black">
+      <div class="ui" style="background: #111">
         <div class="pad">
           ${results.map(LevelScore)}
           ${ average > threshold
             ? `<div class="box action"
-                onclick="goto(${SCENES.FIND}, ${results.length})">next</div>`
+                onclick="goto(${SCENE_FIND}, ${results.length})">next</div>`
             : `<div class="box action"
-                onclick="goto(${SCENES.NOPASS})"
+                onclick="goto(${SCENE_NOPASS})"
                 title="Collect more accurate moments before advancing.">…?</div>`
            }
         </div>
@@ -4993,10 +5022,10 @@ var LevelSelect$1 = connect(LevelSelect);
 
 function NoPassage() {
   return Scene$1(
-    {id: SCENES.NOPASS, from: "black", to: "black"},
+    {id: SCENE_NOPASS, from: "#000", to: "#000"},
     html`
-      <div class="ui action black"
-        onclick="goto(${SCENES.LEVELS})">
+      <div class="ui action" style="background: #111"
+        onclick="goto(${SCENE_LEVELS})">
         <div class="pad">
           The path onward is never easy.
           Collect more accurate moments before venturing forth.

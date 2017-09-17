@@ -16,8 +16,11 @@
       background: #111;
       font-family: Lato, Roboto, "Open Sans", "Helvetica Neue", Arial, sans-serif;
       font-weight: 200;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.7);
       font-size: 64pt;
+
+      -moz-user-select: none;
+      user-select: none;
     }
 
     .ui {
@@ -43,26 +46,6 @@
       max-height: 720px;
     }
 
-    .fadein {
-      animation: fadein 1s forwards;
-    }
-
-    .flash {
-      animation: fadein .1s forwards;
-    }
-
-    .fadeout {
-      animation: fadein 1s forwards reverse;
-    }
-
-    .black {
-      background: #111;
-    }
-
-    .white {
-      background: #fff;
-    }
-
     .box {
       padding: .5rem;
       transition: color 1s;
@@ -75,7 +58,7 @@
     }
 
     a:hover, .box:hover {
-      color: rgba(255, 255, 255, 0.8) !important;
+      color: rgba(255, 255, 255, 0.85) !important;
     }
   </style>
 </head>
