@@ -1,15 +1,15 @@
 import html from "innerself";
 import Scene from "./Scene";
-import { SCENES } from "./actions"
+import { SCENE_INTRO, SCENE_LEVELS, SCENE_FIND } from "./actions"
 import { connect } from "./store";
 
 function IntroScreen({results}) {
   const onclick = results.length
-    ? `goto(${SCENES.LEVELS})`
-    : `goto(${SCENES.FIND}, 0)`;
+    ? `goto(${SCENE_LEVELS})`
+    : `goto(${SCENE_FIND}, 0)`;
 
   return Scene(
-    {id: SCENES.INTRO, from: "#111", to: "#111"},
+    {id: SCENE_INTRO, from: "#111", to: "#111"},
     html`
       <div class="ui action" onclick="${onclick}">
         <div class="pad">

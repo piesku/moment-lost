@@ -1,21 +1,21 @@
-import { TRANSITION, SCENES } from "./actions";
+import * as actions from "./actions";
 import { merge } from "./util";
 
 const init = {
-  current_scene: SCENES.TITLE,
+  current_scene: actions.SCENE_TITLE,
   // An array of the next scene's name and optional args.
-  next: [SCENES.TITLE],
+  next: [actions.SCENE_TITLE],
 }
 
 export default function navigation(state = init, action, args) {
   switch (action) {
-    case TRANSITION.START: {
+    case actions.TRANSITION_START: {
       return merge(state, { next: args  });
     }
-    case TRANSITION.END: {
+    case actions.TRANSITION_END: {
       return merge(state, { next: [null]});
     }
-    case TRANSITION.CHANGE_SCENE: {
+    case actions.TRANSITION_CHANGE_SCENE: {
       const { next: [next_scene] } = state;
       return merge(state, { current_scene: next_scene });
     }

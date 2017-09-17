@@ -1,7 +1,7 @@
 import { create_level, start_level, end_level } from "./game";
 import { play_music } from "./audio";
 import { setup_idle, clear_idle } from "./idle";
-import { SCENES, ACTIONS } from "./actions";
+import * as actions from "./actions";
 import { merge } from "./util";
 
 const init = {
@@ -15,7 +15,7 @@ const init = {
 
 export default function reducer(state = init, action, args) {
   switch (action) {
-    case ACTIONS.INIT: {
+    case actions.INIT: {
       play_music();
       const saved_results = localStorage.getItem("results");
       const results = saved_results
@@ -23,36 +23,36 @@ export default function reducer(state = init, action, args) {
         : [];
       return merge(state, { results });
     }
-    case SCENES.FIND: {
+    case actions.SCENE_FIND: {
       const [index] = args;
       const [level, hue] = create_level(index + 1);
       return merge(state, { index, level, hue, clickable: false });
     }
-    case ACTIONS.TOGGLE_CLICKABLE: {
+    case actions.TOGGLE_CLICKABLE: {
       const { clickable } = state;
       return merge(state, { clickable: !clickable });
     }
-    case ACTIONS.SAVE_SNAPSHOT: {
+    case actions.SAVE_SNAPSHOT: {
       const [target] = args;
       return merge(state, { target });
     }
-    case ACTIONS.LOCK_POINTER: {
+    case actions.LOCK_POINTER: {
       const { level } = state;
       level.canvas.requestPointerLock();
       return state;
     }
-    case SCENES.PLAY: {
+    case actions.SCENE_PLAY: {
       const { level, hue, target } = state;
       start_level(level, hue, target);
       level.canvas.addEventListener("click", oncanvasclick);
       setup_idle();
       return merge(state, { idle_reason: null });
     }
-    case ACTIONS.WARN_IDLE: {
+    case actions.WARN_IDLE: {
       const [idle_reason] = args;
       return merge(state, { idle_reason });
     }
-    case ACTIONS.VALIDATE_SNAPSHOT: {
+    case actions.VALIDATE_SNAPSHOT: {
       const { level, index, target, results } = state;
       const score = end_level(level, target);
       const new_results = [
@@ -67,14 +67,14 @@ export default function reducer(state = init, action, args) {
       localStorage.setItem("results", new_results.join(" "));
       return merge(state, { results: new_results });
     }
-    case SCENES.LEVELS:
+    case actions.SCENE_LEVELS:
       return merge(state, { level: null });
     default:
       return Object.assign({}, init, state);
   }
 
   function oncanvasclick() {
-    window.dispatch(ACTIONS.VALIDATE_SNAPSHOT);
-    window.goto(SCENES.SCORE);
+    window.dispatch(actions.VALIDATE_SNAPSHOT);
+    window.goto(actions.SCENE_SCORE);
   }
 }

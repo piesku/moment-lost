@@ -1,10 +1,10 @@
 import html from "innerself";
-import { TRANSITION } from "./actions";
+import { TRANSITION_CHANGE_SCENE, TRANSITION_END } from "./actions";
 import { connect } from "./store";
 
 function Fadein(from_color, duration = 1) {
   return `<div class="ui"
-    onanimationend="dispatch(${TRANSITION.END})"
+    onanimationend="dispatch(${TRANSITION_END})"
     style="
       background-color: ${from_color};
       animation: fadein ${duration}s forwards reverse"></div>`;
@@ -13,7 +13,7 @@ function Fadein(from_color, duration = 1) {
 function Fadeout(next, to_color, duration = 1) {
   return `<div class="ui"
     onanimationend="
-      dispatch(${TRANSITION.CHANGE_SCENE});
+      dispatch(${TRANSITION_CHANGE_SCENE});
       dispatch(${next.join(", ")})"
     style="
       background-color: ${to_color};

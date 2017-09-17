@@ -1,6 +1,6 @@
 import html from "innerself";
 import Scene from "./Scene";
-import { SCENES } from "./actions"
+import { SCENE_SCORE, SCENE_LEVELS } from "./actions"
 import { connect } from "./store";
 
 function ScoreScreen({results, index, target}) {
@@ -22,13 +22,13 @@ function ScoreScreen({results, index, target}) {
   return Scene(
     // Simulate a flash of light with a .1s fadeout to white in PlayOverlay and
     // a 1.9s fadein here.
-    {id: SCENES.SCORE, from: "#fff", duration_in: 1.9, to: "#111"},
+    {id: SCENE_SCORE, from: "#fff", duration_in: 1.9, to: "#111"},
     html`
       <img class="ui"
         style="opacity: .5"
         src="${target.snapshot}">
       <div class="ui action"
-        onclick="goto(${SCENES.LEVELS})">
+        onclick="goto(${SCENE_LEVELS})">
         <div class="pad" style="margin: 1.5rem 0 1rem;">${message}</div>
         <div>${results[index]}</div>
       </div>`
