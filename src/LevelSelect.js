@@ -19,7 +19,7 @@ function LevelSelect({results}) {
   const threshold = 100 * (1 - 2.5 / results.length);
 
   return Scene(
-    {id: SCENE_LEVELS, from: "#111", to: "#111"},
+    {id: SCENE_LEVELS, from: "#000", to: "#000"},
     html`
       <div class="ui" style="background: #111">
         <div class="pad">

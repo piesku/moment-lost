@@ -9,7 +9,7 @@ function IntroScreen({results}) {
     : `goto(${SCENE_FIND}, 0)`;
 
   return Scene(
-    {id: SCENE_INTRO, from: "#111", to: "#111"},
+    {id: SCENE_INTRO, from: "#000", to: "#000"},
     html`
       <div class="ui action" onclick="${onclick}">
         <div class="pad">

@@ -26,7 +26,7 @@ function FindScreenClickable() {
 
 function FindScreen({hue, clickable}) {
   return Scene(
-    {id: SCENE_FIND, from: "#111", to: "#fff"},
+    {id: SCENE_FIND, from: "#000", to: "#fff"},
     clickable ? FindScreenClickable() : FindScreenAnimating(hue)
   );
 }

@@ -4,7 +4,7 @@ import { SCENE_TITLE, SCENE_INTRO } from "./actions"
 
 export default function TitleScreen() {
   return Scene(
-    {id: SCENE_TITLE, from: "#111", to: "#111"},
+    {id: SCENE_TITLE, from: "#000", to: "#000"},
     html`
       <div class="ui action"
         onclick="goto(${SCENE_INTRO})">
