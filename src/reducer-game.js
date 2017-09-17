@@ -2,6 +2,7 @@ import { create_level, start_level, end_level } from "./game";
 import { play_music } from "./audio";
 import { setup_idle, clear_idle } from "./idle";
 import * as actions from "./actions";
+import { dispatch, goto } from "./store";
 import { merge } from "./util";
 
 const init = {
@@ -74,7 +75,7 @@ export default function reducer(state = init, action, args) {
   }
 
   function oncanvasclick() {
-    window.dispatch(actions.VALIDATE_SNAPSHOT);
-    window.goto(actions.SCENE_SCORE);
+    dispatch(actions.VALIDATE_SNAPSHOT);
+    goto(actions.SCENE_SCORE);
   }
 }

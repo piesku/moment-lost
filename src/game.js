@@ -6,6 +6,7 @@ import { quat } from "cervus/math";
 import { rgb_to_hex, hsl_to_rgb } from "cervus/utils";
 
 import { SAVE_SNAPSHOT } from "./actions";
+import { dispatch } from "./store";
 import { element } from "./level-elements.js";
 import * as random from "./random";
 import { DummyLookAt, get_score, get_hint } from "./score";
@@ -104,7 +105,7 @@ export function create_level(lvl_number) {
       position: game.camera.get_component(Transform).position,
       rotation: game.camera.get_component(Transform).rotation,
     };
-    window['dispatch'](SAVE_SNAPSHOT, target);
+    dispatch(SAVE_SNAPSHOT, target);
     game.stop();
   });
 

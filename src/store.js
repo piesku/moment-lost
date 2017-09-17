@@ -18,11 +18,11 @@ function chain(...reducers) {
 
 const reducer = chain(navigation_reducer, game_reducer);
 // const reducer = with_logger(chain(navigation_reducer, game_reducer));
-const { attach, connect, dispatch } =
-  createStore(reducer);
+const { attach, connect, dispatch } = createStore(reducer);
+const goto = (...args) => dispatch(TRANSITION_START, ...args);
 
-// Closure compiler's shit
-window['dispatch'] = dispatch;
-window['goto'] = (...args) => dispatch(TRANSITION_START, ...args);
+window.dispatch = dispatch;
+window.goto = goto;
 dispatch(INIT);
-export { attach, connect };
+
+export { attach, connect, dispatch, goto };

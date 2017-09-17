@@ -1,4 +1,6 @@
 import { WARN_IDLE } from "./actions"
+import { dispatch } from "./store";
+
 const MAX_IDLE = 5000;
 let last_active = {};
 let idle_check;
@@ -11,7 +13,7 @@ function detect_idle() {
   clear_idle();
   for (const type of ["mousemove", "keydown"]) {
     if (last_active[type] + MAX_IDLE < performance.now()) {
-      window.dispatch(WARN_IDLE, type);
+      dispatch(WARN_IDLE, type);
       break;
     }
   }
