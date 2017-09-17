@@ -3,7 +3,8 @@ import Scene from "./Scene";
 import { SCENES, ACTIONS } from "./actions"
 import { connect } from "./store";
 
-function FindScreen({next_scene, hue}) {
+function FindScreen({next, hue}) {
+  const [next_scene] = next;
   const style = next_scene === SCENES.PLAY
     ? null
     : `background: hsl(${hue * 360}, 70%, 60%); `

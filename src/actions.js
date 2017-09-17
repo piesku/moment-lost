@@ -1,6 +1,7 @@
 export const TRANSITION = {
   START: 100,
-  END: 101,
+  CHANGE_SCENE: 101,
+  END: 102,
 };
 
 export const SCENES = {
