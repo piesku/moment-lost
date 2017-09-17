@@ -1,3 +1,8 @@
+export const TRANSITION = {
+  START: 100,
+  END: 101,
+};
+
 export const SCENES = {
   TITLE: 0,
   INTRO: 1,

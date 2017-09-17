@@ -20,7 +20,7 @@ function ScoreScreen({results, index, target}) {
     : "Wonderful. You've found it.";
 
   return Scene(
-    {id: SCENES.SCORE, from: "white", to: "black"},
+    {id: SCENES.SCORE, from: "#fff", to: "#111"},
     html`
       <img class="ui"
         style="opacity: .5"

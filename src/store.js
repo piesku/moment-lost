@@ -1,6 +1,6 @@
 import { createStore } from "innerself";
 // import with_logger from "innerself/logger";
-import { ACTIONS } from "./actions";
+import { TRANSITION, ACTIONS } from "./actions";
 import navigation_reducer from "./reducer-navi";
 import game_reducer from "./reducer-game";
 
@@ -23,6 +23,6 @@ const { attach, connect, dispatch } =
 
 // Closure compiler's shit
 window['dispatch'] = dispatch;
-window['goto'] = (...args) => dispatch("T0", ...args);
+window['goto'] = (...args) => dispatch(TRANSITION.START, ...args);
 dispatch(ACTIONS.INIT);
 export { attach, connect };

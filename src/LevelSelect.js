@@ -19,9 +19,9 @@ function LevelSelect({results}) {
   const threshold = 100 * (1 - 2.5 / results.length);
 
   return Scene(
-    {id: SCENES.LEVELS, from: "black", to: "black"},
+    {id: SCENES.LEVELS, from: "#111", to: "#111"},
     html`
-      <div class="ui black">
+      <div class="ui" style="background: #111">
         <div class="pad">
           ${results.map(LevelScore)}
           ${ average > threshold

@@ -10,7 +10,7 @@ function FindScreen({next_scene, hue}) {
       + "animation: fadein 1s 1s forwards reverse";
 
   return Scene(
-    {id: SCENES.FIND, from: "black", to: "white"},
+    {id: SCENES.FIND, from: "#111", to: "#fff"},
     html`
       <div class="ui" style="${style}"></div>
       <div class="ui action"

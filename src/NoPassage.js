@@ -4,9 +4,9 @@ import { SCENES } from "./actions"
 
 export default function NoPassage() {
   return Scene(
-    {id: SCENES.NOPASS, from: "black", to: "black"},
+    {id: SCENES.NOPASS, from: "#111", to: "#111"},
     html`
-      <div class="ui action black"
+      <div class="ui action"
         onclick="goto(${SCENES.LEVELS})">
         <div class="pad">
           The path onward is never easy.
