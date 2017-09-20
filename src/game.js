@@ -15,7 +15,8 @@ import { distance } from "gl-matrix/src/gl-matrix/vec3";
 import { spawn_birds } from "./bird";
 
 const DEBUG = false;
-const WORLD_SIZE = 1000;
+const LEVEL_SIZE = 1000;
+const WORLD_SIZE = LEVEL_SIZE * 10;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
@@ -38,7 +39,12 @@ export function create_level(lvl_number) {
     width: window.innerWidth,
     height: window.innerHeight,
     clear_color: "#eeeeee",
-    far: WORLD_SIZE
+    // Don't make this too high a number.  Clipping makes the distant props
+    // appear as if they were generated dynamically which is okay.  It also
+    // make the horizon more diverse with gaps of sky peeking between
+    // buildings close by, even if there's actually a (clipped) prop in the
+    // distance.
+    far: LEVEL_SIZE
   });
 
   game.camera.add_component(new Move({
@@ -67,7 +73,7 @@ export function create_level(lvl_number) {
     });
   }
 
-  game.camera.get_component(Transform).position = random.position([0, 0], WORLD_SIZE / 3);
+  game.camera.get_component(Transform).position = random.position([0, 0], LEVEL_SIZE / 3);
   game.camera.get_component(Transform).look_at(
     random.element_of(props).get_component(Transform).position
   );
@@ -85,7 +91,7 @@ export function create_level(lvl_number) {
 
   const spawners = random.integer(2, 4);
   for (let i = 0; i < spawners; i++) {
-    const birds_position = random.position([0, 0], WORLD_SIZE/3, -3);
+    const birds_position = random.position([0, 0], LEVEL_SIZE / 3, -3);
     birds_positions.push(birds_position);
 
     if (DEBUG) {
@@ -133,8 +139,8 @@ export function start_level(game, hue, target) {
       if (distance(birds_positions[i], game.camera.get_component(Transform).position) < BIRD_TRIGGER_DISTANCE) {
         spawn_birds(
           birds_positions[i],
-          hex(hue, LUMINANCE * get_hint(target, game.camera, WORLD_SIZE)),
-          WORLD_SIZE/5,
+          hex(hue, LUMINANCE * get_hint(target, game.camera, LEVEL_SIZE)),
+          LEVEL_SIZE / 5,
           BIRD_FLOCK_SIZE,
           game
         );
@@ -145,7 +151,7 @@ export function start_level(game, hue, target) {
   });
 
   game.on("afterrender", function () {
-    const hint = get_hint(target, game.camera, WORLD_SIZE);
+    const hint = get_hint(target, game.camera, LEVEL_SIZE);
     // XXX Change color on the material instance?
     for (const entity of game.entities) {
       entity.get_component(Render).color = hex(hue, LUMINANCE * hint);
@@ -155,6 +161,6 @@ export function start_level(game, hue, target) {
 
 export function end_level(game, target) {
   game.stop();
-  const score = get_score(target, game.camera, WORLD_SIZE);
+  const score = get_score(target, game.camera, LEVEL_SIZE);
   return Math.floor(score * 100);
 }
