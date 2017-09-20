@@ -4213,9 +4213,9 @@ function smooth(x) {
   return Math.sqrt(Math.pow(1 - x, 2));
 }
 
-function position_score(target, current, world_size) {
+function position_score(target, current, level_size) {
   const dist = distance$2(target, current);
-  const max_distance = Math.sqrt(world_size * world_size) / 2;
+  const max_distance = Math.sqrt(level_size * level_size) / 2;
   return Math.max(0, 1 - dist / max_distance);
 }
 
@@ -4229,11 +4229,11 @@ function rotation_score(target, current) {
  * This takes into account the fact that the user might be looking _at_ the
  * target, too.  The hint is only used to scale the luminance of the world.
  */
-function get_hint(target, camera, world_size) {
+function get_hint(target, camera, level_size) {
   const transform = camera.get_component(Transform);
   const dummy = camera.get_component(DummyLookAt);
 
-  const p = position_score(target.position, transform.position, world_size);
+  const p = position_score(target.position, transform.position, level_size);
   const current = rotation_score(target.rotation, transform.rotation);
   const to_target = rotation_score(transform.rotation, dummy.rotation);
 
@@ -4251,10 +4251,10 @@ function get_hint(target, camera, world_size) {
 /*
  * Calculate the final score for the level in range [0, 1].
  */
-function get_score(target, camera, world_size) {
+function get_score(target, camera, level_size) {
   const transform = camera.get_component(Transform);
 
-  const p = position_score(target.position, transform.position, world_size);
+  const p = position_score(target.position, transform.position, level_size);
   const r = rotation_score(target.rotation, transform.rotation);
 
   // See https://slack-files.com/T137YH5CK-F70S69J0J-51a91c0eaa
@@ -4565,7 +4565,8 @@ function spawn_birds(position$$1, color, radius, qty, game) {
 }
 
 const DEBUG = false;
-const WORLD_SIZE = 1000;
+const LEVEL_SIZE = 1000;
+const WORLD_SIZE = LEVEL_SIZE * 10;
 const SATURATION = 0.7;
 const LUMINANCE = 0.6;
 const PLAYER_HEIGHT = 1.74;
@@ -4588,14 +4589,19 @@ function create_level(lvl_number) {
     width: window.innerWidth,
     height: window.innerHeight,
     clear_color: "#eeeeee",
-    far: WORLD_SIZE
+    // Don't make this too high a number.  Clipping makes the distant props
+    // appear as if they were generated dynamically which is okay.  It also
+    // make the horizon more diverse with gaps of sky peeking between
+    // buildings close by, even if there's actually a (clipped) prop in the
+    // distance.
+    far: LEVEL_SIZE
   });
 
   game.camera.add_component(new Move({
     keyboard_controlled: false,
     mouse_controlled: false,
-    move_speed: 25,
-    rotate_speed: .5,
+    move_speed: 30,
+    rotate_speed: .2,
   }));
 
   const hue = float(0, 1);
@@ -4617,7 +4623,7 @@ function create_level(lvl_number) {
     });
   }
 
-  game.camera.get_component(Transform).position = position([0, 0], WORLD_SIZE / 3);
+  game.camera.get_component(Transform).position = position([0, 0], LEVEL_SIZE / 3);
   game.camera.get_component(Transform).look_at(
     element_of(props).get_component(Transform).position
   );
@@ -4635,7 +4641,7 @@ function create_level(lvl_number) {
 
   const spawners = integer(2, 4);
   for (let i = 0; i < spawners; i++) {
-    const birds_position = position([0, 0], WORLD_SIZE/3, -3);
+    const birds_position = position([0, 0], LEVEL_SIZE / 3, -3);
     birds_positions.push(birds_position);
 
     if (DEBUG) {
@@ -4683,8 +4689,8 @@ function start_level(game, hue, target) {
       if (distance(birds_positions[i], game.camera.get_component(Transform).position) < BIRD_TRIGGER_DISTANCE) {
         spawn_birds(
           birds_positions[i],
-          hex(hue, LUMINANCE * get_hint(target, game.camera, WORLD_SIZE)),
-          WORLD_SIZE/5,
+          hex(hue, LUMINANCE * get_hint(target, game.camera, LEVEL_SIZE)),
+          LEVEL_SIZE / 5,
           BIRD_FLOCK_SIZE,
           game
         );
@@ -4695,7 +4701,7 @@ function start_level(game, hue, target) {
   });
 
   game.on("afterrender", function () {
-    const hint = get_hint(target, game.camera, WORLD_SIZE);
+    const hint = get_hint(target, game.camera, LEVEL_SIZE);
     // XXX Change color on the material instance?
     for (const entity of game.entities) {
       entity.get_component(Render).color = hex(hue, LUMINANCE * hint);
@@ -4705,7 +4711,7 @@ function start_level(game, hue, target) {
 
 function end_level(game, target) {
   game.stop();
-  const score = get_score(target, game.camera, WORLD_SIZE);
+  const score = get_score(target, game.camera, LEVEL_SIZE);
   return Math.floor(score * 100);
 }
 
@@ -4817,21 +4823,21 @@ function reducer$1(state = init$1, action, args) {
   }
 }
 
-// import with_logger from "innerself/logger";
-function chain(...reducers) {
-  // return reducers.reduce(
-  //   (acc, reducer) => (state, ...rest) => reducer(acc(state, ...rest), ...rest)
-  //   state => state
-  // );
-  return function(state, action, args) {
-    return reducers.reduce(
-      (acc, reducer) => reducer(acc, action, args), state
+function combine(reducers) {
+  return function(state = {}, action, args) {
+    return Object.keys(reducers).reduce(
+      (acc, name) => Object.assign(acc, {
+        [name]: reducers[name](state[name], action, args),
+      }),
+      state
     );
   }
 }
 
-const reducer = chain(navigation, reducer$1);
-// const reducer = with_logger(chain(navigation_reducer, game_reducer));
+//import with_logger from "innerself/logger";
+//const reducer = with_logger(combine({nav, game}));
+const reducer = combine({nav: navigation, game: reducer$1});
+
 const { attach, connect, dispatch } = createStore(reducer);
 const goto = (...args) => dispatch(TRANSITION_START, ...args);
 
@@ -4870,7 +4876,8 @@ function Scene({next}, {id, from, to, duration_in, duration_out}, ...children) {
       : Fadeout(next, to, duration_out)}`;
 }
 
-var Scene$1 = connect(Scene);
+// Select only the "nav" part of the state.
+var Scene$1 = connect((state, ...args) => Scene(state.nav, ...args));
 
 function TitleScreen() {
   return Scene$1(
@@ -4901,8 +4908,6 @@ function IntroScreen({results}) {
   );
 }
 
-var IntroScreen$1 = connect(IntroScreen);
-
 function FindScreenAnimating(hue) {
   return html`
     <div class="ui"
@@ -4930,8 +4935,6 @@ function FindScreen({hue, clickable}) {
   );
 }
 
-var FindScreen$1 = connect(FindScreen);
-
 function PlayOverlay({idle_reason}) {
   const message = idle_reason === "keydown"
     ? "Walk with the WASD keys."
@@ -4948,8 +4951,6 @@ function PlayOverlay({idle_reason}) {
         }</div>`
   );
 }
-
-var PlayOverlay$1 = connect(PlayOverlay);
 
 function ScoreScreen({results, index, target}) {
   const score = results[index];
@@ -4983,8 +4984,6 @@ function ScoreScreen({results, index, target}) {
   );
 }
 
-var ScoreScreen$1 = connect(ScoreScreen);
-
 function LevelScore(score, idx) {
   return html`
      <div class="box action"
@@ -4995,10 +4994,14 @@ function LevelScore(score, idx) {
 }
 
 function LevelSelect({results}) {
-  const total = results.reduce((acc, cur) => acc + cur, 0);
+  // This block assumes results has at least one item. The IntroScreen ensures
+  // the user doesn't get here without any results.
+  const total = results.reduce((acc, cur) => acc + cur);
   const average = Math.floor(total / results.length);
-  // An inverted hyperbola with lim(x → ∞) = 1.
-  const threshold = 100 * (1 - 2.5 / results.length);
+  // An inverted hyperbola with lim(x → ∞) = 1. Levels 2 and 3 are always
+  // available. Level 4 requires an average of 0.33. Level 5 requires an
+  // average of 0.5, etc.
+  const threshold = 100 * (1 - 2 / results.length);
 
   return Scene$1(
     {id: SCENE_LEVELS, from: "#000", to: "#000"},
@@ -5018,8 +5021,6 @@ function LevelSelect({results}) {
   );
 }
 
-var LevelSelect$1 = connect(LevelSelect);
-
 function NoPassage() {
   return Scene$1(
     {id: SCENE_NOPASS, from: "#000", to: "#000"},
@@ -5036,17 +5037,17 @@ function NoPassage() {
 
 const scenes = [
   TitleScreen,
-  IntroScreen$1,
-  FindScreen$1,
-  PlayOverlay$1,
-  ScoreScreen$1,
-  LevelSelect$1,
+  IntroScreen,
+  FindScreen,
+  PlayOverlay,
+  ScoreScreen,
+  LevelSelect,
   NoPassage,
 ];
 
-function App({current_scene}) {
+function App({game, nav: {current_scene}}) {
   const component = scenes[current_scene];
-  return component ? component() : "";
+  return component ? component(game) : "";
 }
 
 var App$1 = connect(App);
