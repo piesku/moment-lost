@@ -44,8 +44,8 @@ export function create_level(lvl_number) {
   game.camera.add_component(new Move({
     keyboard_controlled: false,
     mouse_controlled: false,
-    move_speed: 25,
-    rotate_speed: .5,
+    move_speed: 30,
+    rotate_speed: .2,
   }));
 
   const hue = random.float(0, 1);
