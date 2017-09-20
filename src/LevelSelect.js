@@ -12,10 +12,14 @@ function LevelScore(score, idx) {
 }
 
 export default function LevelSelect({results}) {
-  const total = results.reduce((acc, cur) => acc + cur, 0);
+  // This block assumes results has at least one item. The IntroScreen ensures
+  // the user doesn't get here without any results.
+  const total = results.reduce((acc, cur) => acc + cur);
   const average = Math.floor(total / results.length);
-  // An inverted hyperbola with lim(x → ∞) = 1.
-  const threshold = 100 * (1 - 2.5 / results.length);
+  // An inverted hyperbola with lim(x → ∞) = 1. Levels 2 and 3 are always
+  // available. Level 4 requires an average of 0.33. Level 5 requires an
+  // average of 0.5, etc.
+  const threshold = 100 * (1 - 2 / results.length);
 
   return Scene(
     {id: SCENE_LEVELS, from: "#000", to: "#000"},
