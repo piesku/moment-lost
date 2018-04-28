@@ -4294,7 +4294,7 @@ function element_of$1(arr) {
   return arr[integer$1(0, arr.length - 1)];
 }
 
-const context = new AudioContext();
+const context = new (window.AudioContext || window.webkitAudioContext)();
 
 // https://en.wikipedia.org/wiki/Piano_key_frequencies
 const notes = [
