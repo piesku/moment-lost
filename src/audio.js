@@ -9,7 +9,8 @@ function element_of(arr) {
   return arr[integer(0, arr.length - 1)];
 }
 
-const context = new (window.AudioContext || window.webkitAudioContext)();
+export const context =
+  new (window.AudioContext || window.webkitAudioContext)();
 
 // https://en.wikipedia.org/wiki/Piano_key_frequencies
 const notes = [
@@ -79,7 +80,7 @@ function play_note(freq) {
 export function play_music() {
   const note = element_of(notes);
   play_note(note);
-  setTimeout(play_music, 2000 + integer(0, 10000));
+  return setTimeout(play_music, 2000 + integer(0, 10000));
 }
 
 function fm_synth(audio_context, carrier, modulator, mod_gain) {

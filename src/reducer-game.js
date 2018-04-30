@@ -1,5 +1,4 @@
 import { create_level, start_level, end_level } from "./game";
-import { play_music } from "./audio";
 import { setup_idle, clear_idle } from "./idle";
 import * as actions from "./actions";
 import { dispatch, goto } from "./store";
@@ -17,7 +16,6 @@ const init = {
 export default function reducer(state = init, action, args) {
   switch (action) {
     case actions.INIT: {
-      play_music();
       const saved_results = localStorage.getItem("results");
       const results = saved_results
         ? saved_results.split(" ").map(x => parseInt(x))

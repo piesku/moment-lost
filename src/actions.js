@@ -17,3 +17,6 @@ export const WARN_IDLE = 12;
 export const VALIDATE_SNAPSHOT = 13;
 export const LOCK_POINTER = 14;
 export const TOGGLE_CLICKABLE = 15;
+
+export const AUDIO_RESUME = 51;
+export const AUDIO_RESUMED = 52;
