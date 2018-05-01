@@ -79,6 +79,9 @@ const VALIDATE_SNAPSHOT = 13;
 const LOCK_POINTER = 14;
 const TOGGLE_CLICKABLE = 15;
 
+const AUDIO_RESUME = 51;
+const AUDIO_RESUMED = 52;
+
 function merge(...objs) {
   return Object.assign({}, ...objs);
 }
@@ -4294,7 +4297,8 @@ function element_of$1(arr) {
   return arr[integer$1(0, arr.length - 1)];
 }
 
-const context = new (window.AudioContext || window.webkitAudioContext)();
+const context =
+  new (window.AudioContext || window.webkitAudioContext)();
 
 // https://en.wikipedia.org/wiki/Piano_key_frequencies
 const notes = [
@@ -4364,7 +4368,7 @@ function play_note(freq) {
 function play_music() {
   const note = element_of$1(notes);
   play_note(note);
-  setTimeout(play_music, 2000 + integer$1(0, 10000));
+  return setTimeout(play_music, 2000 + integer$1(0, 10000));
 }
 
 function fm_synth(audio_context, carrier, modulator, mod_gain) {
@@ -4760,7 +4764,6 @@ const init$1 = {
 function reducer$1(state = init$1, action, args) {
   switch (action) {
     case INIT: {
-      play_music();
       const saved_results = localStorage.getItem("results");
       const results = saved_results
         ? saved_results.split(" ").map(x => parseInt(x))
@@ -4823,6 +4826,28 @@ function reducer$1(state = init$1, action, args) {
   }
 }
 
+const init$2 = {
+  timeout: null,
+  resuming: false,
+};
+
+function reducer$2(state = init$2, action) {
+  switch (action) {
+    case AUDIO_RESUME: {
+      const {timeout, resuming} = state;
+      if (!resuming && !timeout) {
+        context.resume().then(
+          () => dispatch(AUDIO_RESUMED));
+      }
+      return merge(state, {resuming: true});
+    }
+    case AUDIO_RESUMED: {
+      const timeout = play_music();
+      return merge(state, {resuming: false, timeout});
+    }
+  }
+}
+
 function combine(reducers) {
   return function(state = {}, action, args) {
     return Object.keys(reducers).reduce(
@@ -4835,8 +4860,8 @@ function combine(reducers) {
 }
 
 //import with_logger from "innerself/logger";
-//const reducer = with_logger(combine({nav, game}));
-const reducer = combine({nav: navigation, game: reducer$1});
+//const reducer = with_logger(combine({nav, game, audio}));
+const reducer = combine({nav: navigation, game: reducer$1, audio: reducer$2});
 
 const { attach, connect, dispatch } = createStore(reducer);
 const goto = (...args) => dispatch(TRANSITION_START, ...args);
@@ -4884,7 +4909,7 @@ function TitleScreen() {
     {id: SCENE_TITLE, from: "#000", to: "#000"},
     html`
       <div class="ui action"
-        onclick="goto(${SCENE_INTRO})">
+        onclick="dispatch(${AUDIO_RESUME});goto(${SCENE_INTRO})">
         <div class="pad" style="margin: 1.3rem 0 1rem;">A moment lost in time.</div>
         <div style="font-size: 0.3rem; animation: fadein 1s 3s both">
           A story by <a href="https://piesku.com">piesku.com</a>.</div>
